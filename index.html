@@ -126,7 +126,16 @@
           <div id="dashboard-certs-panel" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Certifications in progress</h2>
-              <button type="button" data-nav-jump="certifications" class="text-xs font-medium text-chime hover:underline">View all →</button>
+              <div class="flex items-center gap-1" id="dashboard-certs-nav">
+                <button type="button" id="dashboard-certs-prev" class="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700" aria-label="Previous certifications">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span id="dashboard-certs-page-indicator" class="min-w-[4.5rem] text-center text-xs text-slate-500 tabular-nums">1 / 1</span>
+                <button type="button" id="dashboard-certs-next" class="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700" aria-label="Next certifications">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <button type="button" data-nav-jump="certifications" class="ml-1 text-xs font-medium text-chime hover:underline">View all →</button>
+              </div>
             </div>
             <p id="dashboard-certs-summary" class="text-sm text-slate-500"></p>
             <div id="dashboard-certs-cards" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
@@ -237,7 +246,7 @@
                 </label>
                 <div class="rounded-xl border border-sky-100 bg-sky-50/50 p-4 dark:border-sky-900 dark:bg-sky-950/30">
                   <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Paycheck transfers to Chime</p>
-                  <p class="mt-0.5 text-xs text-slate-500">Biweekly pay — modeled as 2 paychecks deposited each calendar month.</p>
+                  <p class="mt-0.5 text-xs text-slate-500">Biweekly pay — deposits land every 14 days from your start date (not lumped on the 1st).</p>
                   <div class="mt-3 grid grid-cols-2 gap-3">
                     <label class="block text-sm">
                       <span class="text-slate-600 dark:text-slate-400">Per paycheck ($)</span>
@@ -250,6 +259,11 @@
                   </div>
                   <p id="chime-monthly-total-label" class="mt-3 text-sm font-semibold text-chime">Monthly total: $400</p>
                 </div>
+                <label class="block">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">First Chime deposit date</span>
+                  <input type="date" id="chime-deposits-started" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                  <span class="mt-1 block text-xs text-slate-500">When paycheck transfers began (e.g. mid-month last month). Current balance should be as of today.</span>
+                </label>
                 <label class="block">
                   <span class="text-sm text-slate-600 dark:text-slate-400">Annual Percentage Yield (APY %)</span>
                   <input type="number" id="chime-apy" min="0" max="20" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
@@ -271,6 +285,10 @@
                   <dt class="text-slate-500">Monthly Chime contribution</dt>
                   <dd id="chime-monthly-contribution" class="text-right font-medium text-chime">—</dd>
                 </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700 gap-4">
+                  <dt class="text-slate-500">Paychecks still due this month</dt>
+                  <dd id="chime-remaining-month" class="text-right font-medium">—</dd>
+                </div>
                 <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
                   <dt class="text-slate-500">Balance at end of current month</dt>
                   <dd id="chime-proj-month" class="font-semibold text-chime">—</dd>
@@ -288,7 +306,7 @@
                   <dd id="chime-monthly-rate" class="font-medium">—</dd>
                 </div>
               </dl>
-              <p class="mt-4 text-xs text-slate-500">Each month: add (paycheck × paychecks/month), then interest on balance × (APY/12).</p>
+              <p class="mt-4 text-xs text-slate-500">Balance is as of today. Remaining biweekly deposits this month are added, then interest (APY÷12) at month-end.</p>
             </div>
           </div>
         </section>
@@ -466,19 +484,29 @@
     const STORAGE_CERTIFICATIONS = 'eduRepayment_certifications';
     const STORAGE_EXAM_ATTEMPTS = 'eduRepayment_examAttempts';
     const STORAGE_DATA_VERSION = 'eduRepayment_dataVersion';
-    const DATA_VERSION = 7;
+    const DATA_VERSION = 9;
     const PROJECTION_MONTHS_DEFAULT = 48;
     const MAX_REIMBURSED_ATTEMPTS_PER_YEAR = 2;
+    const DASHBOARD_CERTS_PER_PAGE = 6;
 
     const DEFAULT_CHIME = {
       balance: 400,
       paycheckAmount: 200,
       paychecksPerMonth: 2,
+      paycheckIntervalDays: 14,
+      depositsStartedDate: '',
       monthlyDeposit: 400,
       apy: 3.5,
       stopDepositsEnabled: false,
       stopDepositsDate: '',
     };
+
+    function defaultDepositsStartedDate() {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      d.setDate(15);
+      return formatDate(d);
+    }
 
     /** Sync monthlyDeposit from paycheck × count; migrate older saves that only had monthlyDeposit */
     function normalizeChimeSettings(settings) {
@@ -489,8 +517,58 @@
       }
       s.paycheckAmount = Math.max(0, Number(s.paycheckAmount) || 0);
       s.paychecksPerMonth = Math.max(0, Number(s.paychecksPerMonth) || 0);
+      s.paycheckIntervalDays = Math.max(1, Number(s.paycheckIntervalDays) || 14);
+      if (!s.depositsStartedDate) s.depositsStartedDate = defaultDepositsStartedDate();
       s.monthlyDeposit = s.paycheckAmount * s.paychecksPerMonth;
       return s;
+    }
+
+    function startOfToday() {
+      const n = new Date();
+      return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    }
+
+    function shouldDepositOnDate(depDate, settings) {
+      if (!settings.stopDepositsEnabled || !settings.stopDepositsDate) return true;
+      return depDate <= parseDate(settings.stopDepositsDate);
+    }
+
+    /** Biweekly (or custom interval) paycheck dates from first deposit through horizon. */
+    function getPaycheckDepositDates(settings, throughDate) {
+      const s = normalizeChimeSettings(settings);
+      const start = parseDate(s.depositsStartedDate);
+      const end = throughDate instanceof Date ? throughDate : parseDate(throughDate);
+      const dates = [];
+      const d = new Date(start);
+      while (d <= end) {
+        dates.push(new Date(d));
+        d.setDate(d.getDate() + s.paycheckIntervalDays);
+      }
+      return dates;
+    }
+
+    function paycheckAmountForProjection(settings, depositOverride) {
+      const s = normalizeChimeSettings(settings);
+      if (depositOverride == null) return s.paycheckAmount;
+      const ppm = s.paychecksPerMonth || 2;
+      return depositOverride / ppm;
+    }
+
+    /** Deposits still to land after today through end of current calendar month. */
+    function remainingPaychecksThisMonth(settings, paycheckOverride = null) {
+      const today = startOfToday();
+      const monthEnd = endOfMonth(today);
+      const amount = paycheckOverride ?? paycheckAmountForProjection(settings, null);
+      const dates = getPaycheckDepositDates(settings, monthEnd);
+      let count = 0;
+      let total = 0;
+      dates.forEach((d) => {
+        if (d > today && shouldDepositOnDate(d, settings)) {
+          count += 1;
+          total += amount;
+        }
+      });
+      return { count, total, dates: dates.filter((d) => d > today && shouldDepositOnDate(d, settings)) };
     }
 
     function getMonthlyDeposit(settings) {
@@ -516,7 +594,7 @@
       { id: 'cert-azure-ai', name: 'Azure AI Fundamentals', certification: 'Microsoft Certified: Azure AI Fundamentals (AI-900)', examName: 'Azure AI fundamentals exam', examFee: 99, status: 'passed', notes: '', cloudCramId: 'ai900' },
       { id: 'cert-azure-fund', name: 'Azure Fundamentals', certification: 'Microsoft Certified: Azure Fundamentals (AZ-900)', examName: 'Azure Fundamentals exam', examFee: 99, status: 'passed', notes: '', cloudCramId: 'az900' },
       { id: 'cert-gcp-leader', name: 'Google Cloud Leader', certification: 'Google Cloud Digital Leader', examName: 'Google Cloud Leader exam', examFee: 99, status: 'passed', notes: '', cloudCramId: 'gcp' },
-      { id: 'cert-terraform', name: 'Terraform Associate 004', certification: 'HashiCorp Certified: Terraform Associate (004)', examName: 'Terraform associate 004 exam', examFee: 70.5, status: 'in_progress', notes: 'Paid attempt Apr 14, 2026 — failed', cloudCramId: 'terraform' },
+      { id: 'cert-terraform', name: 'Terraform Associate 004', certification: 'HashiCorp Certified: Terraform Associate (004)', examName: 'Terraform associate 004 exam', examFee: 70.5, status: 'in_progress', notes: 'Retake planned Jun 15, 2026', cloudCramId: 'terraform' },
       { id: 'cert-gcp-pca', name: 'GCP PCA', certification: 'Google Cloud Professional Cloud Architect', examName: 'GCP PCA exam', examFee: 200, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'gcp_pca' },
       { id: 'cert-aws-mla', name: 'AWS MLA', certification: 'AWS Certified Machine Learning Engineer – Associate', examName: 'AWS MLA exam', examFee: 150, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'aws_mlea' },
       { id: 'cert-aws-dea', name: 'AWS DEA', certification: 'AWS Certified Data Engineer – Associate', examName: 'AWS DEA exam', examFee: 150, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'aws_dea' },
@@ -538,14 +616,15 @@
       { id: 'exp-azure-ai-2', name: 'Azure AI Fundamentals', certification: 'Microsoft Certified: Azure AI Fundamentals (AI-900)', incurredDate: '2026-03-04', cost: 99, expenseType: 'exam', certificationId: 'cert-azure-ai', upcoming: false },
       { id: 'exp-gcp-leader', name: 'Google Cloud Leader', certification: 'Google Cloud Digital Leader', incurredDate: '2026-03-22', cost: 99, expenseType: 'exam', certificationId: 'cert-gcp-leader', upcoming: false },
       { id: 'exp-terraform', name: 'Terraform Associate 004', certification: 'HashiCorp Certified: Terraform Associate (004)', incurredDate: '2026-04-14', cost: 70.5, expenseType: 'exam', certificationId: 'cert-terraform', upcoming: false },
-      { id: 'exp-cissp-exam-up', name: 'CISSP', certification: 'Certified Information Systems Security Professional (CISSP)', incurredDate: '2026-06-01', cost: 749, expenseType: 'exam', certificationId: 'cert-cissp', upcoming: true },
       { id: 'exp-gcp-pca-up', name: 'GCP PCA', certification: 'Google Cloud Professional Cloud Architect', incurredDate: '2026-06-01', cost: 200, expenseType: 'exam', certificationId: 'cert-gcp-pca', upcoming: true },
-      { id: 'exp-aws-mla-up', name: 'AWS MLA', certification: 'AWS Certified Machine Learning Engineer – Associate', incurredDate: '2026-06-01', cost: 150, expenseType: 'exam', certificationId: 'cert-aws-mla', upcoming: true },
-      { id: 'exp-aws-dea-up', name: 'AWS DEA', certification: 'AWS Certified Data Engineer – Associate', incurredDate: '2026-06-01', cost: 150, expenseType: 'exam', certificationId: 'cert-aws-dea', upcoming: true },
-      { id: 'exp-aws-genai-up', name: 'AWS GenAI Pro', certification: 'AWS Certified Generative AI Developer – Professional', incurredDate: '2026-06-01', cost: 300, expenseType: 'exam', certificationId: 'cert-aws-genai', upcoming: true },
-      { id: 'exp-secai-up', name: 'SecAI+', certification: 'CompTIA SecAI+ (CY0-001)', incurredDate: '2026-06-01', cost: 392, expenseType: 'exam', certificationId: 'cert-secai', upcoming: true },
-      { id: 'exp-rhcsa-up', name: 'RHCSA 9', certification: 'Red Hat Certified System Administrator (RHEL 9)', incurredDate: '2026-06-01', cost: 400, expenseType: 'exam', certificationId: 'cert-rhcsa9', upcoming: true },
-      { id: 'exp-rhce-up', name: 'RHCE', certification: 'Red Hat Certified Engineer (EX294)', incurredDate: '2026-06-01', cost: 400, expenseType: 'exam', certificationId: 'cert-rhce', upcoming: true },
+      { id: 'exp-terraform-up', name: 'Terraform Associate 004', certification: 'HashiCorp Certified: Terraform Associate (004)', incurredDate: '2026-06-15', cost: 70.5, expenseType: 'exam', certificationId: 'cert-terraform', upcoming: true },
+      { id: 'exp-aws-dea-up', name: 'AWS DEA', certification: 'AWS Certified Data Engineer – Associate', incurredDate: '2026-07-15', cost: 150, expenseType: 'exam', certificationId: 'cert-aws-dea', upcoming: true },
+      { id: 'exp-aws-mla-up', name: 'AWS MLA', certification: 'AWS Certified Machine Learning Engineer – Associate', incurredDate: '2026-08-05', cost: 150, expenseType: 'exam', certificationId: 'cert-aws-mla', upcoming: true },
+      { id: 'exp-aws-genai-up', name: 'AWS GenAI Pro', certification: 'AWS Certified Generative AI Developer – Professional', incurredDate: '2026-09-05', cost: 300, expenseType: 'exam', certificationId: 'cert-aws-genai', upcoming: true },
+      { id: 'exp-cissp-exam-up', name: 'CISSP', certification: 'Certified Information Systems Security Professional (CISSP)', incurredDate: '2026-09-19', cost: 749, expenseType: 'exam', certificationId: 'cert-cissp', upcoming: true },
+      { id: 'exp-secai-up', name: 'SecAI+', certification: 'CompTIA SecAI+ (CY0-001)', incurredDate: '2026-10-03', cost: 392, expenseType: 'exam', certificationId: 'cert-secai', upcoming: true },
+      { id: 'exp-rhcsa-up', name: 'RHCSA 9', certification: 'Red Hat Certified System Administrator (RHEL 9)', incurredDate: '2026-10-17', cost: 400, expenseType: 'exam', certificationId: 'cert-rhcsa9', upcoming: true },
+      { id: 'exp-rhce-up', name: 'RHCE', certification: 'Red Hat Certified Engineer (EX294)', incurredDate: '2026-10-31', cost: 400, expenseType: 'exam', certificationId: 'cert-rhce', upcoming: true },
     ];
 
     const DEFAULT_EXAM_ATTEMPTS = [
@@ -559,7 +638,21 @@
       { id: 'att-azure-ai-2', certificationId: 'cert-azure-ai', attemptDate: '2026-03-04', cost: 99, result: 'passed', reimbursed: true },
       { id: 'att-gcp-leader', certificationId: 'cert-gcp-leader', attemptDate: '2026-03-22', cost: 99, result: 'passed', reimbursed: true },
       { id: 'att-terraform', certificationId: 'cert-terraform', attemptDate: '2026-04-14', cost: 70.5, result: 'failed', reimbursed: true },
+      { id: 'att-terraform-2', certificationId: 'cert-terraform', attemptDate: '2026-06-15', cost: 70.5, result: 'scheduled', reimbursed: true },
     ];
+
+    /** Planned exam dates for upcoming expenses (staggered study track). */
+    const STAGGERED_UPCOMING_DATES = {
+      'exp-gcp-pca-up': '2026-06-01',
+      'exp-terraform-up': '2026-06-15',
+      'exp-aws-dea-up': '2026-07-15',
+      'exp-aws-mla-up': '2026-08-05',
+      'exp-aws-genai-up': '2026-09-05',
+      'exp-cissp-exam-up': '2026-09-19',
+      'exp-secai-up': '2026-10-03',
+      'exp-rhcsa-up': '2026-10-17',
+      'exp-rhce-up': '2026-10-31',
+    };
 
     function seedDefaultData() {
       expenses = JSON.parse(JSON.stringify(DEFAULT_EXPENSES));
@@ -606,6 +699,57 @@
           } catch { /* keep existing */ }
         }
       }
+      if (fromVersion < 8) {
+        const chimeRaw = localStorage.getItem(STORAGE_CHIME);
+        if (chimeRaw) {
+          try {
+            const parsed = JSON.parse(chimeRaw);
+            if (!parsed.depositsStartedDate) {
+              parsed.depositsStartedDate = defaultDepositsStartedDate();
+              parsed.paycheckIntervalDays = parsed.paycheckIntervalDays || 14;
+              localStorage.setItem(STORAGE_CHIME, JSON.stringify(normalizeChimeSettings(parsed)));
+            }
+          } catch { /* keep existing */ }
+        }
+      }
+      if (fromVersion < 9) {
+        Object.entries(STAGGERED_UPCOMING_DATES).forEach(([id, date]) => {
+          const exp = expenses.find((e) => e.id === id);
+          if (exp) exp.incurredDate = date;
+          else if (id === 'exp-terraform-up') {
+            expenses.push({
+              id: 'exp-terraform-up',
+              name: 'Terraform Associate 004',
+              certification: 'HashiCorp Certified: Terraform Associate (004)',
+              incurredDate: date,
+              cost: 70.5,
+              expenseType: 'exam',
+              certificationId: 'cert-terraform',
+              upcoming: true,
+            });
+          }
+        });
+        expenses.forEach((e) => {
+          if (e.upcoming && e.incurredDate === '2026-06-01' && STAGGERED_UPCOMING_DATES[e.id] && e.id !== 'exp-gcp-pca-up') {
+            e.incurredDate = STAGGERED_UPCOMING_DATES[e.id];
+          }
+        });
+        if (!examAttempts.some((a) => a.id === 'att-terraform-2')) {
+          examAttempts.push({
+            id: 'att-terraform-2',
+            certificationId: 'cert-terraform',
+            attemptDate: '2026-06-15',
+            cost: 70.5,
+            result: 'scheduled',
+            reimbursed: true,
+          });
+        }
+        const tf = certifications.find((c) => c.id === 'cert-terraform');
+        if (tf) tf.notes = 'Retake planned Jun 15, 2026';
+        saveExpenses();
+        saveExamAttempts();
+        saveCertifications();
+      }
     }
 
     /* ============================================================
@@ -618,6 +762,7 @@
     let selectedExamYear = new Date().getFullYear();
     let chartDashboard = null;
     let chartCalendar = null;
+    let dashboardCertsPage = 0;
 
     /* ============================================================
        CLAWBACK & DATE HELPERS
@@ -870,34 +1015,37 @@
       return new Date(date.getFullYear(), date.getMonth() + 1, 0);
     }
 
-    function shouldDepositInMonth(monthStart, settings) {
-      if (!settings.stopDepositsEnabled || !settings.stopDepositsDate) return true;
-      const stop = parseDate(settings.stopDepositsDate);
-      // No deposit if month starts after stop month (stop date's month still gets deposit if before stop day — simplify: no deposit if monthStart > stop month end)
-      const stopMonthEnd = endOfMonth(stop);
-      return monthStart <= stopMonthEnd;
-    }
-
     /**
-     * Project Chime balances for N months from current month.
-     * @param {object} settings - balance, apy, monthlyDeposit, stop flags
-     * @param {number} months
-     * @param {number|null} depositOverride - optional what-if deposit
+     * Project Chime balances month-by-month.
+     * Current balance = as of today (deposits through today are already included).
+     * Only paychecks after today are added forward; then monthly interest (APY/12).
      */
     function projectChime(settings, months, depositOverride = null) {
-      const deposit = depositOverride ?? getMonthlyDeposit(settings);
-      const monthlyRate = (settings.apy || 0) / 100 / 12;
+      const s = normalizeChimeSettings(settings);
+      const paycheck = paycheckAmountForProjection(s, depositOverride);
+      const monthlyRate = (s.apy || 0) / 100 / 12;
       const monthStarts = getMonthStarts(months);
-      let balance = Number(settings.balance) || 0;
+      const today = startOfToday();
+      const horizon = endOfMonth(monthStarts[monthStarts.length - 1] || today);
+      const allDates = getPaycheckDepositDates(s, horizon);
+      let balance = Number(s.balance) || 0;
+      let dateIdx = 0;
       const rows = [];
 
-      monthStarts.forEach((monthStart, i) => {
-        const dep = shouldDepositInMonth(monthStart, settings) ? deposit : 0;
-        balance += dep;
+      monthStarts.forEach((monthStart) => {
+        const monthEnd = endOfMonth(monthStart);
+        let dep = 0;
+        while (dateIdx < allDates.length && allDates[dateIdx] <= monthEnd) {
+          const d = allDates[dateIdx];
+          if (d > today && shouldDepositOnDate(d, s)) {
+            balance += paycheck;
+            dep += paycheck;
+          }
+          dateIdx += 1;
+        }
         const interest = balance * monthlyRate;
         balance += interest;
-        const asOf = endOfMonth(monthStart);
-        const required = totalRepaymentAt(asOf);
+        const required = totalRepaymentAt(monthEnd);
         rows.push({
           monthStart,
           label: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
@@ -1190,9 +1338,27 @@
       });
     }
 
+    function renderDashboardCertCard(c, year) {
+      const used = reimbursedCountForCert(c.id, year);
+      const remaining = remainingReimbursedSlots(c.id, year);
+      const fee = examFeeForCert(c);
+      const stake = atStakeForCert(c.id, year);
+      return `
+        <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-600">
+          <p class="text-sm font-medium">${escapeHtml(c.name)}</p>
+          <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(c.examName)}</p>
+          ${fee > 0 ? `<p class="mt-1 text-xs text-slate-500">${formatMoney(fee)}/attempt · <span class="font-medium text-amber-700 dark:text-amber-300">${formatMoney(stake.stillAtStake)}</span> at stake</p>` : ''}
+          <p class="mt-2 text-xs"><span class="font-semibold ${remaining ? 'text-surplus' : 'text-amber-600'}">${used}/${MAX_REIMBURSED_ATTEMPTS_PER_YEAR}</span> reimbursed attempts used in ${year}</p>
+        </div>`;
+    }
+
     function renderDashboardCerts() {
       const summary = document.getElementById('dashboard-certs-summary');
       const cards = document.getElementById('dashboard-certs-cards');
+      const prevBtn = document.getElementById('dashboard-certs-prev');
+      const nextBtn = document.getElementById('dashboard-certs-next');
+      const indicator = document.getElementById('dashboard-certs-page-indicator');
+      const nav = document.getElementById('dashboard-certs-nav');
       if (!summary || !cards) return;
       const year = new Date().getFullYear();
       const active = certifications.filter((c) => c.status === 'in_progress' || c.status === 'planned');
@@ -1200,23 +1366,23 @@
       if (!active.length) {
         summary.textContent = 'No certifications in progress. Add one under Certifications.';
         cards.innerHTML = '';
+        if (nav) nav.classList.add('hidden');
         return;
       }
 
+      const totalPages = Math.max(1, Math.ceil(active.length / DASHBOARD_CERTS_PER_PAGE));
+      if (dashboardCertsPage >= totalPages) dashboardCertsPage = totalPages - 1;
+      if (dashboardCertsPage < 0) dashboardCertsPage = 0;
+      const start = dashboardCertsPage * DASHBOARD_CERTS_PER_PAGE;
+      const pageItems = active.slice(start, start + DASHBOARD_CERTS_PER_PAGE);
+
       summary.textContent = `${active.length} certification${active.length !== 1 ? 's' : ''} in progress · ${year} reimbursement slots below`;
-      cards.innerHTML = active.slice(0, 6).map((c) => {
-        const used = reimbursedCountForCert(c.id, year);
-        const remaining = remainingReimbursedSlots(c.id, year);
-        const fee = examFeeForCert(c);
-        const stake = atStakeForCert(c.id, year);
-        return `
-          <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-600">
-            <p class="text-sm font-medium">${escapeHtml(c.name)}</p>
-            <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(c.examName)}</p>
-            ${fee > 0 ? `<p class="mt-1 text-xs text-slate-500">${formatMoney(fee)}/attempt · <span class="font-medium text-amber-700 dark:text-amber-300">${formatMoney(stake.stillAtStake)}</span> at stake</p>` : ''}
-            <p class="mt-2 text-xs"><span class="font-semibold ${remaining ? 'text-surplus' : 'text-amber-600'}">${used}/${MAX_REIMBURSED_ATTEMPTS_PER_YEAR}</span> reimbursed attempts used in ${year}</p>
-          </div>`;
-      }).join('');
+      cards.innerHTML = pageItems.map((c) => renderDashboardCertCard(c, year)).join('');
+
+      if (nav) nav.classList.toggle('hidden', totalPages <= 1);
+      if (indicator) indicator.textContent = `${dashboardCertsPage + 1} / ${totalPages}`;
+      if (prevBtn) prevBtn.disabled = dashboardCertsPage <= 0;
+      if (nextBtn) nextBtn.disabled = dashboardCertsPage >= totalPages - 1;
     }
 
     function updateAttemptReimburseWarning() {
@@ -1367,6 +1533,13 @@
       if (rateEl) rateEl.textContent = ((chimeSettings.apy / 12)).toFixed(3) + '%';
       const contribEl = document.getElementById('chime-monthly-contribution');
       if (contribEl) contribEl.textContent = formatPaycheckSummary(chimeSettings);
+      const remaining = remainingPaychecksThisMonth(chimeSettings);
+      const remainingEl = document.getElementById('chime-remaining-month');
+      if (remainingEl) {
+        remainingEl.textContent = remaining.count
+          ? `${remaining.count} × ${formatMoney(paycheckAmountForProjection(chimeSettings, null))} = ${formatMoney(remaining.total)}`
+          : 'None scheduled';
+      }
     }
 
     function updateChimeMonthlyLabels() {
@@ -1383,6 +1556,7 @@
       document.getElementById('chime-paycheck-amount').value = chimeSettings.paycheckAmount;
       document.getElementById('chime-paychecks-per-month').value = chimeSettings.paychecksPerMonth;
       document.getElementById('chime-apy').value = chimeSettings.apy;
+      document.getElementById('chime-deposits-started').value = chimeSettings.depositsStartedDate || defaultDepositsStartedDate();
       document.getElementById('chime-stop-deposits').checked = chimeSettings.stopDepositsEnabled;
       document.getElementById('chime-stop-date').value = chimeSettings.stopDepositsDate || '';
       document.getElementById('stop-date-wrap').classList.toggle('opacity-50', !chimeSettings.stopDepositsEnabled);
@@ -1397,6 +1571,7 @@
       chimeSettings.paycheckAmount = parseFloat(document.getElementById('chime-paycheck-amount').value) || 0;
       chimeSettings.paychecksPerMonth = parseInt(document.getElementById('chime-paychecks-per-month').value, 10) || 0;
       chimeSettings.apy = parseFloat(document.getElementById('chime-apy').value) || 0;
+      chimeSettings.depositsStartedDate = document.getElementById('chime-deposits-started').value;
       chimeSettings.stopDepositsEnabled = document.getElementById('chime-stop-deposits').checked;
       chimeSettings.stopDepositsDate = document.getElementById('chime-stop-date').value;
       chimeSettings = normalizeChimeSettings(chimeSettings);
@@ -1729,7 +1904,7 @@
         refreshAll();
       });
 
-      ['chime-balance', 'chime-paycheck-amount', 'chime-paychecks-per-month', 'chime-apy', 'chime-stop-deposits', 'chime-stop-date'].forEach((id) => {
+      ['chime-balance', 'chime-paycheck-amount', 'chime-paychecks-per-month', 'chime-deposits-started', 'chime-apy', 'chime-stop-deposits', 'chime-stop-date'].forEach((id) => {
         const el = document.getElementById(id);
         el.addEventListener('input', () => {
           readChimeFromInputs();
@@ -1855,6 +2030,27 @@
       document.querySelectorAll('[data-nav-jump]').forEach((btn) => {
         btn.addEventListener('click', () => navigate(btn.dataset.navJump));
       });
+
+      const certsPrev = document.getElementById('dashboard-certs-prev');
+      const certsNext = document.getElementById('dashboard-certs-next');
+      if (certsPrev) {
+        certsPrev.addEventListener('click', () => {
+          if (dashboardCertsPage > 0) {
+            dashboardCertsPage -= 1;
+            renderDashboardCerts();
+          }
+        });
+      }
+      if (certsNext) {
+        certsNext.addEventListener('click', () => {
+          const active = certifications.filter((c) => c.status === 'in_progress' || c.status === 'planned');
+          const totalPages = Math.ceil(active.length / DASHBOARD_CERTS_PER_PAGE);
+          if (dashboardCertsPage < totalPages - 1) {
+            dashboardCertsPage += 1;
+            renderDashboardCerts();
+          }
+        });
+      }
     }
 
     /* ============================================================
