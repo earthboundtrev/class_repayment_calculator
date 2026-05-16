@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Education Repayment & Chime Fund Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            chime: { DEFAULT: '#0ea5e9', dark: '#0284c7', light: '#e0f2fe' },
+            surplus: { DEFAULT: '#10b981', light: '#d1fae5' },
+            shortfall: { DEFAULT: '#ef4444', light: '#fee2e2' },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    [data-page] { display: none; }
+    [data-page].active { display: block; }
+    .nav-link.active { background: rgb(14 165 233 / 0.12); color: #0284c7; font-weight: 600; }
+    .dark .nav-link.active { background: rgb(14 165 233 / 0.2); color: #38bdf8; }
+    .calendar-scroll { scrollbar-width: thin; }
+    .calendar-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+    .calendar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .calendar-scroll::-webkit-scrollbar-thumb { background: #475569; }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans antialiased">
+
+  <!-- ========== APP SHELL: sidebar + main ========== -->
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white shadow-lg transition-transform lg:static lg:translate-x-0 dark:border-slate-700 dark:bg-slate-800">
+      <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-700">
+        <svg class="h-8 w-8 text-chime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-sm font-semibold leading-tight">Repayment &<br/>Chime Visualizer</span>
+      </div>
+      <nav class="space-y-1 p-3" id="main-nav">
+        <a href="#" data-nav="dashboard" class="nav-link active flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Dashboard
+        </a>
+        <a href="#" data-nav="certifications" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          Certifications
+        </a>
+        <a href="#" data-nav="expenses" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Expenses
+        </a>
+        <a href="#" data-nav="chime" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          Chime Simulator
+        </a>
+        <a href="#" data-nav="calendar" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Rolling Calendar
+        </a>
+      </nav>
+      <!-- Clawback rules reference -->
+      <div class="mx-3 mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+        <p class="mb-1 font-semibold">Clawback rules (voluntary leave)</p>
+        <ul class="space-y-0.5 text-amber-800 dark:text-amber-300">
+          <li>0–12 mo → 100%</li>
+          <li>12–18 mo → 50%</li>
+          <li>18+ mo → $0</li>
+        </ul>
+      </div>
+      <div class="mx-3 mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
+        <p class="mb-1 font-semibold">Exam reimbursement</p>
+        <p class="text-sky-800 dark:text-sky-300">2 reimbursed attempts per exam per calendar year.</p>
+      </div>
+    </aside>
+    <div id="sidebar-overlay" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden"></div>
+
+    <!-- Main content -->
+    <div class="flex flex-1 flex-col lg:ml-0">
+      <header class="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-700 dark:bg-slate-800/90 lg:px-8">
+        <button id="menu-btn" class="rounded-lg p-2 hover:bg-slate-100 lg:hidden dark:hover:bg-slate-700" aria-label="Open menu">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1 id="page-title" class="text-lg font-semibold">Dashboard</h1>
+        <button id="theme-toggle" class="rounded-lg border border-slate-200 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700" aria-label="Toggle dark mode">
+          <svg id="icon-sun" class="h-5 w-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="icon-moon" class="h-5 w-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </header>
+
+      <main class="flex-1 p-4 lg:p-8">
+
+        <!-- ========== DASHBOARD ========== -->
+        <section data-page="dashboard" class="active space-y-6">
+          <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total expenses tracked</p>
+              <p id="stat-total-expenses" class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">$0</p>
+              <p id="stat-expense-count" class="mt-1 text-sm text-slate-500">0 items</p>
+              <p id="stat-upcoming-expenses" class="mt-1 text-sm text-amber-600 dark:text-amber-400 hidden"></p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Owed if you leave today</p>
+              <p id="stat-repayment-today" class="mt-2 text-2xl font-bold text-shortfall">$0</p>
+              <p class="mt-1 text-sm text-slate-500">Voluntary departure clawback</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Chime projected balance</p>
+              <p id="stat-chime-balance" class="mt-2 text-2xl font-bold text-chime">$0</p>
+              <p class="mt-1 text-sm text-slate-500">Current + growth to month end</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Months until de-risked</p>
+              <p id="stat-months-derisked" class="mt-2 text-2xl font-bold text-surplus">—</p>
+              <p class="mt-1 text-sm text-slate-500">Required balance → $0</p>
+            </div>
+          </div>
+          <div id="dashboard-certs-panel" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Certifications in progress</h2>
+              <button type="button" data-nav-jump="certifications" class="text-xs font-medium text-chime hover:underline">View all →</button>
+            </div>
+            <p id="dashboard-certs-summary" class="text-sm text-slate-500"></p>
+            <div id="dashboard-certs-cards" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Required repayment vs. Chime balance (36 months)</h2>
+            <div class="h-72 sm:h-80">
+              <canvas id="chart-dashboard"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== CERTIFICATIONS & EXAM ATTEMPTS ========== -->
+        <section data-page="certifications" class="space-y-6">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-sm text-slate-500">Track certs you are pursuing and exam attempts reimbursed by your employer (max 2 per exam per calendar year).</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="flex items-center gap-2 text-sm">
+                <span class="text-slate-600 dark:text-slate-400">Calendar year</span>
+                <select id="exam-year-filter" class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"></select>
+              </label>
+              <button type="button" id="btn-add-cert" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white shadow hover:bg-chime-dark">+ Add certification</button>
+              <button type="button" id="btn-add-attempt" class="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">+ Log exam attempt</button>
+            </div>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-3">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs uppercase text-slate-500">In progress</p>
+              <p id="stat-certs-in-progress" class="mt-1 text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs uppercase text-slate-500">Reimbursed attempts (<span id="exam-year-label">—</span>)</p>
+              <p id="stat-attempts-used" class="mt-1 text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs uppercase text-slate-500">At reimbursement limit</p>
+              <p id="stat-certs-maxed" class="mt-1 text-2xl font-bold text-amber-600">0</p>
+            </div>
+          </div>
+          <div id="cert-cards-grid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+              <h2 class="text-sm font-semibold">Exam attempts — <span id="attempts-table-year">—</span></h2>
+            </div>
+            <table class="min-w-full text-left text-sm">
+              <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+                <tr>
+                  <th class="px-4 py-3">Exam / cert</th>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Result</th>
+                  <th class="px-4 py-3">List fee</th>
+                  <th class="px-4 py-3">Paid</th>
+                  <th class="px-4 py-3">Reimbursed</th>
+                  <th class="px-4 py-3">Slot (<span class="year-slot-label">year</span>)</th>
+                  <th class="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="attempts-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ========== EXPENSES ========== -->
+        <section data-page="expenses" class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm text-slate-500">Track company-reimbursed training with clawback dates. <span class="text-amber-700 dark:text-amber-300">Upcoming</span> rows are planned exams from your Cloud Cram study list (not owed until incurred).</p>
+            <div class="flex flex-wrap gap-2">
+              <button id="btn-add-expense" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white shadow hover:bg-chime-dark">+ Add Expense</button>
+              <button id="btn-export" class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">Export JSON</button>
+              <button id="btn-import" class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">Import JSON</button>
+              <input type="file" id="import-file" accept=".json" class="hidden" />
+              <button id="btn-clear-all" class="rounded-lg border border-shortfall/30 px-3 py-2 text-sm text-shortfall hover:bg-shortfall-light dark:hover:bg-red-950/30">Clear all data</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <table class="min-w-full text-left text-sm">
+              <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+                <tr>
+                  <th class="px-4 py-3">Name</th>
+                  <th class="px-4 py-3 hidden md:table-cell">Certification</th>
+                  <th class="px-4 py-3">Incurred</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Cost</th>
+                  <th class="px-4 py-3 hidden lg:table-cell">12-mo</th>
+                  <th class="px-4 py-3 hidden lg:table-cell">18-mo</th>
+                  <th class="px-4 py-3 hidden sm:table-cell">Elapsed</th>
+                  <th class="px-4 py-3">Obligation</th>
+                  <th class="px-4 py-3">Owed today</th>
+                  <th class="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="expenses-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ========== CHIME SIMULATOR ========== -->
+        <section data-page="chime" class="space-y-6">
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold">Chime account settings</h2>
+              <div class="space-y-4">
+                <label class="block">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Current Chime balance ($)</span>
+                  <input type="number" id="chime-balance" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+                <div class="rounded-xl border border-sky-100 bg-sky-50/50 p-4 dark:border-sky-900 dark:bg-sky-950/30">
+                  <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Paycheck transfers to Chime</p>
+                  <p class="mt-0.5 text-xs text-slate-500">Biweekly pay — modeled as 2 paychecks deposited each calendar month.</p>
+                  <div class="mt-3 grid grid-cols-2 gap-3">
+                    <label class="block text-sm">
+                      <span class="text-slate-600 dark:text-slate-400">Per paycheck ($)</span>
+                      <input type="number" id="chime-paycheck-amount" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    </label>
+                    <label class="block text-sm">
+                      <span class="text-slate-600 dark:text-slate-400">Paychecks / month</span>
+                      <input type="number" id="chime-paychecks-per-month" min="0" max="5" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    </label>
+                  </div>
+                  <p id="chime-monthly-total-label" class="mt-3 text-sm font-semibold text-chime">Monthly total: $400</p>
+                </div>
+                <label class="block">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Annual Percentage Yield (APY %)</span>
+                  <input type="number" id="chime-apy" min="0" max="20" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" id="chime-stop-deposits" class="rounded border-slate-300" />
+                  <span class="text-sm">Stop future deposits after a date</span>
+                </label>
+                <label class="block" id="stop-date-wrap">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Stop deposits after</span>
+                  <input type="date" id="chime-stop-date" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold">Projection summary</h2>
+              <dl class="space-y-3 text-sm">
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700 gap-4">
+                  <dt class="text-slate-500">Monthly Chime contribution</dt>
+                  <dd id="chime-monthly-contribution" class="text-right font-medium text-chime">—</dd>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
+                  <dt class="text-slate-500">Balance at end of current month</dt>
+                  <dd id="chime-proj-month" class="font-semibold text-chime">—</dd>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
+                  <dt class="text-slate-500">Required if leave today</dt>
+                  <dd id="chime-required-today" class="font-semibold">—</dd>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
+                  <dt class="text-slate-500">Surplus / shortfall today</dt>
+                  <dd id="chime-surplus-today" class="font-semibold">—</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-slate-500">Monthly interest rate (APY÷12)</dt>
+                  <dd id="chime-monthly-rate" class="font-medium">—</dd>
+                </div>
+              </dl>
+              <p class="mt-4 text-xs text-slate-500">Each month: add (paycheck × paychecks/month), then interest on balance × (APY/12).</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== ROLLING CALENDAR ========== -->
+        <section data-page="calendar" class="space-y-6">
+          <div class="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold">What-if: monthly deposit</h2>
+              <p class="text-xs text-slate-500">Adjust without saving Chime settings — updates calendar instantly.</p>
+            </div>
+            <label class="flex items-center gap-2">
+              <span class="text-sm">Deposit $</span>
+              <input type="number" id="calendar-deposit-override" min="0" step="50" class="w-28 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900" />
+              <button id="btn-sync-deposit" class="rounded-lg border border-slate-200 px-3 py-2 text-xs hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">Use saved</button>
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <span>Months shown</span>
+              <select id="calendar-months" class="rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-600 dark:bg-slate-900">
+                <option value="36">36</option>
+                <option value="42">42</option>
+                <option value="48" selected>48</option>
+              </select>
+            </label>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <h2 class="mb-4 text-sm font-semibold">Required vs. Chime balance (rolling period)</h2>
+            <div class="h-72 sm:h-96">
+              <canvas id="chart-calendar"></canvas>
+            </div>
+          </div>
+          <div id="calendar-cards" class="calendar-scroll flex gap-4 overflow-x-auto pb-4"></div>
+        </section>
+
+      </main>
+
+      <footer class="border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 dark:border-slate-700 lg:px-8">
+        Data saved in browser • No backend • Private
+      </footer>
+    </div>
+  </div>
+
+  <!-- ========== EXPENSE MODAL ========== -->
+  <div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+      <h3 id="modal-title" class="text-lg font-semibold">Add Expense</h3>
+      <form id="expense-form" class="mt-4 space-y-3">
+        <input type="hidden" id="expense-id" />
+        <label class="block text-sm">
+          Name
+          <input required id="expense-name" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" placeholder="AWS Solutions Architect" />
+        </label>
+        <label class="block text-sm">
+          Certification
+          <input required id="expense-cert" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" placeholder="AWS Certified Solutions Architect – Professional" />
+        </label>
+        <label class="block text-sm">
+          Incurred date
+          <input required type="date" id="expense-date" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">
+          Cost (USD)
+          <input required type="number" min="0" step="0.01" id="expense-cost" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">
+          Expense type
+          <select id="expense-type" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
+            <option value="course">Course / training</option>
+            <option value="exam">Exam attempt</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Link to certification (optional)
+          <select id="expense-cert-link" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
+            <option value="">— None —</option>
+          </select>
+        </label>
+        <label class="flex items-start gap-2 text-sm">
+          <input type="checkbox" id="expense-upcoming" class="mt-1 rounded border-slate-300" />
+          <span>Upcoming expense (planned exam — not counted in clawback until incurred date)</span>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="modal-cancel" class="rounded-lg px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Certification modal -->
+  <div id="cert-modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+      <h3 id="cert-modal-title" class="text-lg font-semibold">Add certification</h3>
+      <form id="cert-form" class="mt-4 space-y-3">
+        <input type="hidden" id="cert-id" />
+        <label class="block text-sm">Short name
+          <input required id="cert-name" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" placeholder="AWS SAA" />
+        </label>
+        <label class="block text-sm">Full certification title
+          <input required id="cert-title" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Exam name (for reimbursement limit)
+          <input required id="cert-exam-name" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" placeholder="AWS SAA exam" />
+        </label>
+        <label class="block text-sm">Typical exam fee ($)
+          <input type="number" min="0" step="0.01" id="cert-exam-fee" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Status
+          <select id="cert-status" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
+            <option value="planned">Planned</option>
+            <option value="in_progress" selected>In progress</option>
+            <option value="passed">Passed</option>
+            <option value="paused">Paused</option>
+          </select>
+        </label>
+        <label class="block text-sm">Notes (optional)
+          <textarea id="cert-notes" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"></textarea>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="cert-modal-cancel" class="rounded-lg px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Exam attempt modal -->
+  <div id="attempt-modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+      <h3 id="attempt-modal-title" class="text-lg font-semibold">Log exam attempt</h3>
+      <form id="attempt-form" class="mt-4 space-y-3">
+        <input type="hidden" id="attempt-id" />
+        <label class="block text-sm">Certification / exam
+          <select required id="attempt-cert-id" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"></select>
+        </label>
+        <label class="block text-sm">Attempt date
+          <input required type="date" id="attempt-date" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Result
+          <select id="attempt-result" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
+            <option value="scheduled">Scheduled</option>
+            <option value="passed">Passed</option>
+            <option value="failed">Failed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <label class="block text-sm">Cost ($)
+          <input required type="number" min="0" step="0.01" id="attempt-cost" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="flex items-start gap-2 text-sm">
+          <input type="checkbox" id="attempt-reimbursed" class="mt-1 rounded border-slate-300" />
+          <span>Counts toward reimbursed attempt (max 2 per exam per calendar year)</span>
+        </label>
+        <p id="attempt-reimburse-warning" class="hidden rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"></p>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" id="attempt-create-expense" class="rounded border-slate-300" />
+          <span>Also add as clawback expense (exam fee)</span>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="attempt-modal-cancel" class="rounded-lg px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       STORAGE KEYS & DEFAULTS
+       ============================================================ */
+    const STORAGE_EXPENSES = 'eduRepayment_expenses';
+    const STORAGE_CHIME = 'eduRepayment_chime';
+    const STORAGE_THEME = 'eduRepayment_theme';
+    const STORAGE_CERTIFICATIONS = 'eduRepayment_certifications';
+    const STORAGE_EXAM_ATTEMPTS = 'eduRepayment_examAttempts';
+    const STORAGE_DATA_VERSION = 'eduRepayment_dataVersion';
+    const DATA_VERSION = 6;
+    const PROJECTION_MONTHS_DEFAULT = 48;
+    const MAX_REIMBURSED_ATTEMPTS_PER_YEAR = 2;
+
+    const DEFAULT_CHIME = {
+      balance: 2400,
+      paycheckAmount: 200,
+      paychecksPerMonth: 2,
+      monthlyDeposit: 400,
+      apy: 3.5,
+      stopDepositsEnabled: false,
+      stopDepositsDate: '',
+    };
+
+    /** Sync monthlyDeposit from paycheck × count; migrate older saves that only had monthlyDeposit */
+    function normalizeChimeSettings(settings) {
+      const s = { ...DEFAULT_CHIME, ...settings };
+      if (s.paycheckAmount == null && s.paychecksPerMonth == null && s.monthlyDeposit != null) {
+        s.paycheckAmount = 200;
+        s.paychecksPerMonth = Math.round(Number(s.monthlyDeposit) / s.paycheckAmount) || 2;
+      }
+      s.paycheckAmount = Math.max(0, Number(s.paycheckAmount) || 0);
+      s.paychecksPerMonth = Math.max(0, Number(s.paychecksPerMonth) || 0);
+      s.monthlyDeposit = s.paycheckAmount * s.paychecksPerMonth;
+      return s;
+    }
+
+    function getMonthlyDeposit(settings) {
+      return normalizeChimeSettings(settings).monthlyDeposit;
+    }
+
+    function formatPaycheckSummary(settings) {
+      const s = normalizeChimeSettings(settings);
+      const { paycheckAmount, paychecksPerMonth, monthlyDeposit } = s;
+      if (!paychecksPerMonth) return `Monthly total: ${formatMoney(0)}`;
+      return `${formatMoney(paycheckAmount)} × ${paychecksPerMonth} paycheck${paychecksPerMonth !== 1 ? 's' : ''}/mo = ${formatMoney(monthlyDeposit)}/mo`;
+    }
+
+    /**
+     * Default data — your earned training + exams, plus upcoming exams from
+     * cloudcramquizzes.netlify.app (OCI omitted — free cert, not tracked here).
+     */
+    const DEFAULT_CERTIFICATIONS = [
+      { id: 'cert-cissp', name: 'CISSP', certification: 'Certified Information Systems Security Professional (CISSP)', examName: 'CISSP exam', examFee: 749, status: 'in_progress', notes: 'Bootcamp paid Aug 2025; exam upcoming', cloudCramId: 'cissp' },
+      { id: 'cert-aws-ccp', name: 'AWS CCP', certification: 'AWS Certified Cloud Practitioner', examName: 'AWS CCP exam', examFee: 100, status: 'passed', notes: '', cloudCramId: null },
+      { id: 'cert-aws-saa', name: 'AWS SAA', certification: 'AWS Certified Solutions Architect – Associate', examName: 'AWS SAA exam', examFee: 75, status: 'passed', notes: '', cloudCramId: null },
+      { id: 'cert-aws-aip', name: 'AWS AIP', certification: 'AWS Certified AI Practitioner', examName: 'AWS AIP exam', examFee: 100, status: 'passed', notes: '', cloudCramId: null },
+      { id: 'cert-azure-ai', name: 'Azure AI Fundamentals', certification: 'Microsoft Certified: Azure AI Fundamentals (AI-900)', examName: 'Azure AI fundamentals exam', examFee: 99, status: 'passed', notes: '', cloudCramId: 'ai900' },
+      { id: 'cert-azure-fund', name: 'Azure Fundamentals', certification: 'Microsoft Certified: Azure Fundamentals (AZ-900)', examName: 'Azure Fundamentals exam', examFee: 99, status: 'passed', notes: '', cloudCramId: 'az900' },
+      { id: 'cert-gcp-leader', name: 'Google Cloud Leader', certification: 'Google Cloud Digital Leader', examName: 'Google Cloud Leader exam', examFee: 99, status: 'passed', notes: '', cloudCramId: 'gcp' },
+      { id: 'cert-terraform', name: 'Terraform Associate 004', certification: 'HashiCorp Certified: Terraform Associate (004)', examName: 'Terraform associate 004 exam', examFee: 70.5, status: 'in_progress', notes: 'Paid attempt Apr 14, 2026 — failed', cloudCramId: 'terraform' },
+      { id: 'cert-gcp-pca', name: 'GCP PCA', certification: 'Google Cloud Professional Cloud Architect', examName: 'GCP PCA exam', examFee: 200, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'gcp_pca' },
+      { id: 'cert-aws-mla', name: 'AWS MLA', certification: 'AWS Certified Machine Learning Engineer – Associate', examName: 'AWS MLA exam', examFee: 150, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'aws_mlea' },
+      { id: 'cert-aws-dea', name: 'AWS DEA', certification: 'AWS Certified Data Engineer – Associate', examName: 'AWS DEA exam', examFee: 150, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'aws_dea' },
+      { id: 'cert-aws-genai', name: 'AWS GenAI Pro', certification: 'AWS Certified Generative AI Developer – Professional', examName: 'AWS GenAI Developer exam', examFee: 300, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'aws_genai' },
+      { id: 'cert-secai', name: 'SecAI+', certification: 'CompTIA SecAI+ (CY0-001)', examName: 'SecAI+ exam', examFee: 392, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'secai' },
+      { id: 'cert-rhcsa9', name: 'RHCSA 9', certification: 'Red Hat Certified System Administrator (RHEL 9)', examName: 'RHCSA 9 exam (EX200)', examFee: 400, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'rhcsa9' },
+      { id: 'cert-rhce', name: 'RHCE', certification: 'Red Hat Certified Engineer (EX294)', examName: 'RHCE exam (EX294)', examFee: 400, status: 'planned', notes: 'Cloud Cram study track', cloudCramId: 'rhce' },
+    ];
+
+    const DEFAULT_EXPENSES = [
+      { id: 'exp-cissp-boot', name: 'CISSP', certification: 'CISSP bootcamp', incurredDate: '2025-08-29', cost: 2906.12, expenseType: 'course', certificationId: 'cert-cissp', upcoming: false },
+      { id: 'exp-aws-ccp', name: 'AWS CCP', certification: 'AWS Certified Cloud Practitioner', incurredDate: '2025-10-13', cost: 100, expenseType: 'exam', certificationId: 'cert-aws-ccp', upcoming: false },
+      { id: 'exp-aws-saa-1', name: 'AWS SAA', certification: 'AWS Certified Solutions Architect – Associate', incurredDate: '2025-10-20', cost: 75, expenseType: 'exam', certificationId: 'cert-aws-saa', upcoming: false },
+      { id: 'exp-aws-aip-1', name: 'AWS AIP', certification: 'AWS Certified AI Practitioner', incurredDate: '2025-12-27', cost: 100, expenseType: 'exam', certificationId: 'cert-aws-aip', upcoming: false },
+      { id: 'exp-aws-aip-2', name: 'AWS AIP', certification: 'AWS Certified AI Practitioner', incurredDate: '2026-01-12', cost: 100, expenseType: 'exam', certificationId: 'cert-aws-aip', upcoming: false },
+      { id: 'exp-aws-saa-2', name: 'AWS SAA', certification: 'AWS Certified Solutions Architect – Associate', incurredDate: '2026-01-26', cost: 75, expenseType: 'exam', certificationId: 'cert-aws-saa', upcoming: false },
+      { id: 'exp-azure-ai-1', name: 'Azure AI Fundamentals', certification: 'Microsoft Certified: Azure AI Fundamentals (AI-900)', incurredDate: '2026-02-22', cost: 99, expenseType: 'exam', certificationId: 'cert-azure-ai', upcoming: false },
+      { id: 'exp-azure-fund', name: 'Azure Fundamentals', certification: 'Microsoft Certified: Azure Fundamentals (AZ-900)', incurredDate: '2026-02-23', cost: 99, expenseType: 'exam', certificationId: 'cert-azure-fund', upcoming: false },
+      { id: 'exp-azure-ai-2', name: 'Azure AI Fundamentals', certification: 'Microsoft Certified: Azure AI Fundamentals (AI-900)', incurredDate: '2026-03-04', cost: 99, expenseType: 'exam', certificationId: 'cert-azure-ai', upcoming: false },
+      { id: 'exp-gcp-leader', name: 'Google Cloud Leader', certification: 'Google Cloud Digital Leader', incurredDate: '2026-03-22', cost: 99, expenseType: 'exam', certificationId: 'cert-gcp-leader', upcoming: false },
+      { id: 'exp-terraform', name: 'Terraform Associate 004', certification: 'HashiCorp Certified: Terraform Associate (004)', incurredDate: '2026-04-14', cost: 70.5, expenseType: 'exam', certificationId: 'cert-terraform', upcoming: false },
+      { id: 'exp-cissp-exam-up', name: 'CISSP', certification: 'Certified Information Systems Security Professional (CISSP)', incurredDate: '2026-06-01', cost: 749, expenseType: 'exam', certificationId: 'cert-cissp', upcoming: true },
+      { id: 'exp-gcp-pca-up', name: 'GCP PCA', certification: 'Google Cloud Professional Cloud Architect', incurredDate: '2026-06-01', cost: 200, expenseType: 'exam', certificationId: 'cert-gcp-pca', upcoming: true },
+      { id: 'exp-aws-mla-up', name: 'AWS MLA', certification: 'AWS Certified Machine Learning Engineer – Associate', incurredDate: '2026-06-01', cost: 150, expenseType: 'exam', certificationId: 'cert-aws-mla', upcoming: true },
+      { id: 'exp-aws-dea-up', name: 'AWS DEA', certification: 'AWS Certified Data Engineer – Associate', incurredDate: '2026-06-01', cost: 150, expenseType: 'exam', certificationId: 'cert-aws-dea', upcoming: true },
+      { id: 'exp-aws-genai-up', name: 'AWS GenAI Pro', certification: 'AWS Certified Generative AI Developer – Professional', incurredDate: '2026-06-01', cost: 300, expenseType: 'exam', certificationId: 'cert-aws-genai', upcoming: true },
+      { id: 'exp-secai-up', name: 'SecAI+', certification: 'CompTIA SecAI+ (CY0-001)', incurredDate: '2026-06-01', cost: 392, expenseType: 'exam', certificationId: 'cert-secai', upcoming: true },
+      { id: 'exp-rhcsa-up', name: 'RHCSA 9', certification: 'Red Hat Certified System Administrator (RHEL 9)', incurredDate: '2026-06-01', cost: 400, expenseType: 'exam', certificationId: 'cert-rhcsa9', upcoming: true },
+      { id: 'exp-rhce-up', name: 'RHCE', certification: 'Red Hat Certified Engineer (EX294)', incurredDate: '2026-06-01', cost: 400, expenseType: 'exam', certificationId: 'cert-rhce', upcoming: true },
+    ];
+
+    const DEFAULT_EXAM_ATTEMPTS = [
+      { id: 'att-aws-ccp', certificationId: 'cert-aws-ccp', attemptDate: '2025-10-13', cost: 100, result: 'passed', reimbursed: true },
+      { id: 'att-aws-saa-1', certificationId: 'cert-aws-saa', attemptDate: '2025-10-20', cost: 75, result: 'passed', reimbursed: true },
+      { id: 'att-aws-aip-1', certificationId: 'cert-aws-aip', attemptDate: '2025-12-27', cost: 100, result: 'passed', reimbursed: true },
+      { id: 'att-aws-aip-2', certificationId: 'cert-aws-aip', attemptDate: '2026-01-12', cost: 100, result: 'passed', reimbursed: true },
+      { id: 'att-aws-saa-2', certificationId: 'cert-aws-saa', attemptDate: '2026-01-26', cost: 75, result: 'passed', reimbursed: true },
+      { id: 'att-azure-ai-1', certificationId: 'cert-azure-ai', attemptDate: '2026-02-22', cost: 99, result: 'passed', reimbursed: true },
+      { id: 'att-azure-fund', certificationId: 'cert-azure-fund', attemptDate: '2026-02-23', cost: 99, result: 'passed', reimbursed: true },
+      { id: 'att-azure-ai-2', certificationId: 'cert-azure-ai', attemptDate: '2026-03-04', cost: 99, result: 'passed', reimbursed: true },
+      { id: 'att-gcp-leader', certificationId: 'cert-gcp-leader', attemptDate: '2026-03-22', cost: 99, result: 'passed', reimbursed: true },
+      { id: 'att-terraform', certificationId: 'cert-terraform', attemptDate: '2026-04-14', cost: 70.5, result: 'failed', reimbursed: true },
+    ];
+
+    function seedDefaultData() {
+      expenses = JSON.parse(JSON.stringify(DEFAULT_EXPENSES));
+      certifications = JSON.parse(JSON.stringify(DEFAULT_CERTIFICATIONS));
+      examAttempts = JSON.parse(JSON.stringify(DEFAULT_EXAM_ATTEMPTS));
+      saveExpenses();
+      saveCertifications();
+      saveExamAttempts();
+    }
+
+    /** Add records introduced in a new data version without wiping existing saves. */
+    function migrateData(fromVersion) {
+      if (fromVersion < 6) {
+        if (!expenses.some((e) => e.id === 'exp-cissp-exam-up')) {
+          expenses.push({
+            id: 'exp-cissp-exam-up',
+            name: 'CISSP',
+            certification: 'Certified Information Systems Security Professional (CISSP)',
+            incurredDate: '2026-06-01',
+            cost: 749,
+            expenseType: 'exam',
+            certificationId: 'cert-cissp',
+            upcoming: true,
+          });
+          saveExpenses();
+        }
+        const cissp = certifications.find((c) => c.id === 'cert-cissp');
+        const hasCisspExam = examAttempts.some((a) => a.certificationId === 'cert-cissp');
+        if (cissp && !hasCisspExam) {
+          cissp.status = 'in_progress';
+          cissp.notes = 'Bootcamp paid Aug 2025; exam upcoming';
+          saveCertifications();
+        }
+      }
+    }
+
+    /* ============================================================
+       STATE
+       ============================================================ */
+    let expenses = [];
+    let certifications = [];
+    let examAttempts = [];
+    let chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME });
+    let selectedExamYear = new Date().getFullYear();
+    let chartDashboard = null;
+    let chartCalendar = null;
+
+    /* ============================================================
+       CLAWBACK & DATE HELPERS
+       Months counted from incurred date to reference date (inclusive logic via day diff)
+       ============================================================ */
+    function parseDate(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function addMonths(date, months) {
+      const d = new Date(date);
+      d.setMonth(d.getMonth() + months);
+      return d;
+    }
+
+    /** Full months elapsed between incurred and asOf (fractional for display) */
+    function monthsBetween(start, end) {
+      const s = parseDate(typeof start === 'string' ? start : formatDate(start));
+      const e = typeof end === 'string' ? parseDate(end) : end;
+      let months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+      if (e.getDate() < s.getDate()) months -= 1;
+      const dayFrac = (e.getDate() - s.getDate()) / 30;
+      return Math.max(0, months + dayFrac);
+    }
+
+    /** Obligation percentage: 100% | 50% | 0% per clawback rules */
+    function obligationPercent(incurredDate, asOfDate) {
+      const months = monthsBetween(incurredDate, asOfDate);
+      if (months < 12) return 100;
+      if (months < 18) return 50;
+      return 0;
+    }
+
+    function isExpenseIncurred(expense, asOfDate) {
+      if (!expense.upcoming) return true;
+      const incurred = parseDate(expense.incurredDate);
+      const asOf = typeof asOfDate === 'string' ? parseDate(asOfDate) : asOfDate;
+      return asOf >= incurred;
+    }
+
+    function amountOwed(expense, asOfDate) {
+      if (!isExpenseIncurred(expense, asOfDate)) return 0;
+      const pct = obligationPercent(expense.incurredDate, asOfDate);
+      return (expense.cost * pct) / 100;
+    }
+
+    function upcomingExpenses() {
+      return expenses.filter((e) => e.upcoming && !isExpenseIncurred(e, new Date()));
+    }
+
+    function totalUpcomingCost() {
+      return upcomingExpenses().reduce((s, e) => s + Number(e.cost), 0);
+    }
+
+    function totalRepaymentAt(asOfDate, expenseList = expenses) {
+      return expenseList.reduce((sum, e) => sum + amountOwed(e, asOfDate), 0);
+    }
+
+    function formatMoney(n) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+    }
+
+    function formatElapsed(months) {
+      const whole = Math.floor(months);
+      const days = Math.round((months - whole) * 30);
+      if (whole === 0) return `${days}d`;
+      return days > 0 ? `${whole}mo ${days}d` : `${whole}mo`;
+    }
+
+    /* ============================================================
+       CERTIFICATIONS & EXAM ATTEMPTS (2 reimbursed / exam / year)
+       ============================================================ */
+    function calendarYear(dateStrOrDate) {
+      const d = typeof dateStrOrDate === 'string' ? parseDate(dateStrOrDate) : dateStrOrDate;
+      return d.getFullYear();
+    }
+
+    function getCertification(id) {
+      return certifications.find((c) => c.id === id);
+    }
+
+    function examFeeForCert(cert) {
+      return Number(cert?.examFee) || 0;
+    }
+
+    function atStakeForCert(certId, year = selectedExamYear) {
+      const cert = getCertification(certId);
+      const fee = examFeeForCert(cert);
+      const used = reimbursedCountForCert(certId, year);
+      const remaining = remainingReimbursedSlots(certId, year);
+      return {
+        fee,
+        used,
+        remaining,
+        maxPerYear: fee * MAX_REIMBURSED_ATTEMPTS_PER_YEAR,
+        stillAtStake: fee * remaining,
+      };
+    }
+
+    function ensureCertFeesPanel() {
+      if (document.getElementById('cert-fees-panel')) return;
+      const grid = document.getElementById('cert-cards-grid');
+      if (!grid?.parentNode) return;
+      const panel = document.createElement('div');
+      panel.id = 'cert-fees-panel';
+      panel.className = 'overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800';
+      panel.innerHTML = `
+        <div class="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+          <h2 class="text-sm font-semibold">Exam fees &amp; what's at stake</h2>
+          <p class="mt-0.5 text-xs text-slate-500">Per reimbursed attempt · max <span class="year-slot-label">2</span> per exam per calendar year · clawback applies once incurred</p>
+        </div>
+        <table class="min-w-full text-left text-sm">
+          <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+            <tr>
+              <th class="px-4 py-3">Certification</th>
+              <th class="px-4 py-3">Exam</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Fee / attempt</th>
+              <th class="px-4 py-3">Max / year (2×)</th>
+              <th class="px-4 py-3">Slots used (<span class="year-slot-label">year</span>)</th>
+              <th class="px-4 py-3">Still at stake</th>
+            </tr>
+          </thead>
+          <tbody id="cert-fees-tbody"></tbody>
+        </table>`;
+      grid.parentNode.insertBefore(panel, grid);
+    }
+
+    function renderCertFeesTable() {
+      ensureCertFeesPanel();
+      const tbody = document.getElementById('cert-fees-tbody');
+      if (!tbody) return;
+      const year = selectedExamYear;
+      const statusOrder = { in_progress: 0, planned: 1, passed: 2, paused: 3 };
+      const sorted = [...certifications].sort((a, b) => {
+        const sa = statusOrder[a.status] ?? 9;
+        const sb = statusOrder[b.status] ?? 9;
+        if (sa !== sb) return sa - sb;
+        return a.name.localeCompare(b.name);
+      });
+      if (!sorted.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No certifications yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = sorted.map((c) => {
+        const st = STATUS_LABELS[c.status] || STATUS_LABELS.planned;
+        const { fee, used, remaining, maxPerYear, stillAtStake } = atStakeForCert(c.id, year);
+        const feeLabel = fee > 0 ? formatMoney(fee) : '—';
+        const maxLabel = fee > 0 ? formatMoney(maxPerYear) : '—';
+        const stakeLabel = fee > 0
+          ? (remaining > 0
+            ? `<span class="font-semibold text-amber-700 dark:text-amber-300">${formatMoney(stillAtStake)}</span>`
+            : '<span class="text-slate-400">$0</span>')
+          : '—';
+        return `
+          <tr class="border-b border-slate-100 dark:border-slate-700">
+            <td class="px-4 py-3 font-medium">${escapeHtml(c.name)}</td>
+            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${escapeHtml(c.examName)}</td>
+            <td class="px-4 py-3"><span class="rounded-full px-2 py-0.5 text-[10px] font-medium ${st.class}">${st.label}</span></td>
+            <td class="px-4 py-3 font-medium">${feeLabel}</td>
+            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${maxLabel}</td>
+            <td class="px-4 py-3">${used} / ${MAX_REIMBURSED_ATTEMPTS_PER_YEAR}</td>
+            <td class="px-4 py-3">${stakeLabel}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    function attemptsForCert(certId, year = selectedExamYear) {
+      return examAttempts.filter(
+        (a) => a.certificationId === certId && calendarYear(a.attemptDate) === year
+      );
+    }
+
+    function reimbursedAttemptsForCert(certId, year = selectedExamYear, excludeAttemptId = null) {
+      return attemptsForCert(certId, year).filter(
+        (a) => a.reimbursed && a.id !== excludeAttemptId
+      );
+    }
+
+    function reimbursedCountForCert(certId, year = selectedExamYear, excludeAttemptId = null) {
+      return reimbursedAttemptsForCert(certId, year, excludeAttemptId).length;
+    }
+
+    function remainingReimbursedSlots(certId, year = selectedExamYear, excludeAttemptId = null) {
+      return Math.max(0, MAX_REIMBURSED_ATTEMPTS_PER_YEAR - reimbursedCountForCert(certId, year, excludeAttemptId));
+    }
+
+    function canMarkReimbursed(certId, year, excludeAttemptId = null) {
+      return remainingReimbursedSlots(certId, year, excludeAttemptId) > 0;
+    }
+
+    const STATUS_LABELS = {
+      planned: { label: 'Planned', class: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200' },
+      in_progress: { label: 'In progress', class: 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200' },
+      passed: { label: 'Passed', class: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200' },
+      paused: { label: 'Paused', class: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200' },
+    };
+
+    const RESULT_LABELS = {
+      scheduled: 'Scheduled',
+      passed: 'Passed',
+      failed: 'Failed',
+      cancelled: 'Cancelled',
+    };
+
+    function populateCertSelect(selectEl, includeEmpty = true) {
+      const current = selectEl.value;
+      selectEl.innerHTML = includeEmpty ? '<option value="">— None —</option>' : '';
+      certifications.forEach((c) => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.name} — ${c.examName}`;
+        selectEl.appendChild(opt);
+      });
+      if (current && [...selectEl.options].some((o) => o.value === current)) selectEl.value = current;
+    }
+
+    function populateYearFilter() {
+      const select = document.getElementById('exam-year-filter');
+      if (!select) return;
+      const years = new Set([new Date().getFullYear()]);
+      examAttempts.forEach((a) => years.add(calendarYear(a.attemptDate)));
+      expenses.forEach((e) => years.add(calendarYear(e.incurredDate)));
+      const sorted = [...years].sort((a, b) => b - a);
+      select.innerHTML = sorted.map((y) => `<option value="${y}"${y === selectedExamYear ? ' selected' : ''}>${y}</option>`).join('');
+    }
+
+    /* ============================================================
+       CHIME PROJECTION — month-by-month balance growth
+       ============================================================ */
+    function getMonthStarts(count, fromDate = new Date()) {
+      const starts = [];
+      const d = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+      for (let i = 0; i < count; i++) {
+        starts.push(new Date(d));
+        d.setMonth(d.getMonth() + 1);
+      }
+      return starts;
+    }
+
+    function endOfMonth(date) {
+      return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    }
+
+    function shouldDepositInMonth(monthStart, settings) {
+      if (!settings.stopDepositsEnabled || !settings.stopDepositsDate) return true;
+      const stop = parseDate(settings.stopDepositsDate);
+      // No deposit if month starts after stop month (stop date's month still gets deposit if before stop day — simplify: no deposit if monthStart > stop month end)
+      const stopMonthEnd = endOfMonth(stop);
+      return monthStart <= stopMonthEnd;
+    }
+
+    /**
+     * Project Chime balances for N months from current month.
+     * @param {object} settings - balance, apy, monthlyDeposit, stop flags
+     * @param {number} months
+     * @param {number|null} depositOverride - optional what-if deposit
+     */
+    function projectChime(settings, months, depositOverride = null) {
+      const deposit = depositOverride ?? getMonthlyDeposit(settings);
+      const monthlyRate = (settings.apy || 0) / 100 / 12;
+      const monthStarts = getMonthStarts(months);
+      let balance = Number(settings.balance) || 0;
+      const rows = [];
+
+      monthStarts.forEach((monthStart, i) => {
+        const dep = shouldDepositInMonth(monthStart, settings) ? deposit : 0;
+        balance += dep;
+        const interest = balance * monthlyRate;
+        balance += interest;
+        const asOf = endOfMonth(monthStart);
+        const required = totalRepaymentAt(asOf);
+        rows.push({
+          monthStart,
+          label: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          chimeBalance: balance,
+          required,
+          surplus: balance - required,
+          deposit: dep,
+          interest,
+        });
+      });
+      return rows;
+    }
+
+    /** Months until required repayment hits $0 */
+    function monthsUntilDerisked(maxMonths = 120) {
+      const monthStarts = getMonthStarts(maxMonths);
+      for (let i = 0; i < monthStarts.length; i++) {
+        if (totalRepaymentAt(endOfMonth(monthStarts[i])) <= 0.005) return i;
+      }
+      return null;
+    }
+
+    /* ============================================================
+       PERSISTENCE
+       ============================================================ */
+    function loadData() {
+      const storedVersion = parseInt(localStorage.getItem(STORAGE_DATA_VERSION) || '0', 10);
+      const expRaw = localStorage.getItem(STORAGE_EXPENSES);
+      const certRaw = localStorage.getItem(STORAGE_CERTIFICATIONS);
+      const attRaw = localStorage.getItem(STORAGE_EXAM_ATTEMPTS);
+      const isBrandNew = !expRaw && !certRaw && !attRaw;
+
+      if (isBrandNew) {
+        seedDefaultData();
+        localStorage.setItem(STORAGE_DATA_VERSION, String(DATA_VERSION));
+      } else if (storedVersion < DATA_VERSION) {
+        if (expRaw) {
+          try { expenses = JSON.parse(expRaw); } catch { expenses = []; }
+        }
+        if (certRaw) {
+          try { certifications = JSON.parse(certRaw); } catch { certifications = []; }
+        }
+        if (attRaw) {
+          try { examAttempts = JSON.parse(attRaw); } catch { examAttempts = []; }
+        }
+        migrateData(storedVersion);
+        localStorage.setItem(STORAGE_DATA_VERSION, String(DATA_VERSION));
+      } else {
+        if (expRaw) {
+          try { expenses = JSON.parse(expRaw); } catch { expenses = []; }
+        } else {
+          expenses = [];
+        }
+        if (certRaw) {
+          try { certifications = JSON.parse(certRaw); } catch { certifications = []; }
+        } else {
+          certifications = [];
+        }
+        if (attRaw) {
+          try { examAttempts = JSON.parse(attRaw); } catch { examAttempts = []; }
+        } else {
+          examAttempts = [];
+        }
+      }
+
+      const chimeRaw = localStorage.getItem(STORAGE_CHIME);
+      if (chimeRaw) {
+        try { chimeSettings = normalizeChimeSettings(JSON.parse(chimeRaw)); } catch { chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME }); }
+      } else {
+        chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME });
+        saveChime();
+      }
+
+      const theme = localStorage.getItem(STORAGE_THEME);
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+      populateYearFilter();
+    }
+
+    function saveExpenses() {
+      localStorage.setItem(STORAGE_EXPENSES, JSON.stringify(expenses));
+    }
+
+    function saveChime() {
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      localStorage.setItem(STORAGE_CHIME, JSON.stringify(chimeSettings));
+    }
+
+    function saveCertifications() {
+      localStorage.setItem(STORAGE_CERTIFICATIONS, JSON.stringify(certifications));
+    }
+
+    function saveExamAttempts() {
+      localStorage.setItem(STORAGE_EXAM_ATTEMPTS, JSON.stringify(examAttempts));
+    }
+
+    /* ============================================================
+       UI: RENDER EXPENSES TABLE
+       ============================================================ */
+    function renderExpensesTable() {
+      const tbody = document.getElementById('expenses-tbody');
+      const today = new Date();
+      if (!expenses.length) {
+        tbody.innerHTML = `<tr><td colspan="11" class="px-4 py-8 text-center text-slate-500">No expenses yet. Add one or import JSON.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = expenses.map((e) => {
+        const incurred = parseDate(e.incurredDate);
+        const d12 = formatDate(addMonths(incurred, 12));
+        const d18 = formatDate(addMonths(incurred, 18));
+        const isUpcoming = e.upcoming && !isExpenseIncurred(e, today);
+        const elapsed = isUpcoming ? 0 : monthsBetween(e.incurredDate, today);
+        const pct = isUpcoming ? '—' : `${obligationPercent(e.incurredDate, today)}%`;
+        const owed = amountOwed(e, today);
+        const statusBadge = isUpcoming
+          ? '<span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">Upcoming</span>'
+          : '<span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">Incurred</span>';
+        return `
+          <tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/30${isUpcoming ? ' bg-amber-50/40 dark:bg-amber-950/20' : ''}">
+            <td class="px-4 py-3 font-medium">${escapeHtml(e.name)}</td>
+            <td class="px-4 py-3 hidden md:table-cell text-slate-600 dark:text-slate-400 max-w-xs truncate">${escapeHtml(e.certification)}</td>
+            <td class="px-4 py-3 whitespace-nowrap">${e.incurredDate}</td>
+            <td class="px-4 py-3">${statusBadge}</td>
+            <td class="px-4 py-3">${formatMoney(e.cost)}</td>
+            <td class="px-4 py-3 hidden lg:table-cell text-slate-500">${d12}</td>
+            <td class="px-4 py-3 hidden lg:table-cell text-slate-500">${d18}</td>
+            <td class="px-4 py-3 hidden sm:table-cell">${isUpcoming ? '—' : formatElapsed(elapsed)}</td>
+            <td class="px-4 py-3">${pct}</td>
+            <td class="px-4 py-3 font-medium ${owed > 0 ? 'text-shortfall' : 'text-surplus'}">${formatMoney(owed)}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <button data-edit="${e.id}" class="text-chime hover:underline text-xs mr-2">Edit</button>
+              <button data-delete="${e.id}" class="text-shortfall hover:underline text-xs">Delete</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('[data-edit]').forEach((btn) => {
+        btn.addEventListener('click', () => openExpenseModal(btn.dataset.edit));
+      });
+      tbody.querySelectorAll('[data-delete]').forEach((btn) => {
+        btn.addEventListener('click', () => deleteExpense(btn.dataset.delete));
+      });
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    /* ============================================================
+       UI: CERTIFICATIONS & EXAM ATTEMPTS
+       ============================================================ */
+    function renderCertificationsPage() {
+      const year = selectedExamYear;
+      document.querySelectorAll('.year-slot-label').forEach((el) => { el.textContent = String(year); });
+      const yearLabel = document.getElementById('exam-year-label');
+      const tableYear = document.getElementById('attempts-table-year');
+      if (yearLabel) yearLabel.textContent = String(year);
+      if (tableYear) tableYear.textContent = String(year);
+
+      const inProgress = certifications.filter((c) => c.status === 'in_progress' || c.status === 'planned');
+      const yearAttempts = examAttempts.filter((a) => calendarYear(a.attemptDate) === year);
+      const reimbursedTotal = yearAttempts.filter((a) => a.reimbursed).length;
+      const maxedCerts = certifications.filter((c) => reimbursedCountForCert(c.id, year) >= MAX_REIMBURSED_ATTEMPTS_PER_YEAR).length;
+
+      document.getElementById('stat-certs-in-progress').textContent = String(inProgress.length);
+      document.getElementById('stat-attempts-used').textContent = String(reimbursedTotal);
+      document.getElementById('stat-certs-maxed').textContent = String(maxedCerts);
+
+      renderCertFeesTable();
+
+      const grid = document.getElementById('cert-cards-grid');
+      if (!certifications.length) {
+        grid.innerHTML = '<p class="col-span-full rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-600">No certifications yet. Add one to track exam attempts.</p>';
+      } else {
+        grid.innerHTML = certifications.map((c) => {
+          const st = STATUS_LABELS[c.status] || STATUS_LABELS.planned;
+          const used = reimbursedCountForCert(c.id, year);
+          const remaining = remainingReimbursedSlots(c.id, year);
+          const pct = (used / MAX_REIMBURSED_ATTEMPTS_PER_YEAR) * 100;
+          const yearAtt = attemptsForCert(c.id, year);
+          const fee = examFeeForCert(c);
+          const stake = atStakeForCert(c.id, year);
+          const attemptsList = yearAtt.length
+            ? yearAtt.map((a) => {
+                const cost = formatMoney(a.cost);
+                const result = RESULT_LABELS[a.result] || a.result;
+                const reimb = a.reimbursed ? ' · reimbursed' : '';
+                return `<li class="text-xs text-slate-600 dark:text-slate-400">${a.attemptDate} — ${result} — <span class="font-medium">${cost}</span>${reimb}</li>`;
+              }).join('')
+            : '<li class="text-xs text-slate-400">No attempts this year</li>';
+          const feeBlock = fee > 0
+            ? `<div class="mt-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900/50">
+                <p class="text-xs text-slate-500">Exam fee <span class="font-semibold text-slate-800 dark:text-slate-100">${formatMoney(fee)}</span> per attempt</p>
+                <p class="mt-0.5 text-xs text-slate-500">Max ${year}: <span class="font-medium">${formatMoney(stake.maxPerYear)}</span> (2×) · Still at stake: <span class="font-semibold ${stake.remaining ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500'}">${formatMoney(stake.stillAtStake)}</span></p>
+              </div>`
+            : '';
+          return `
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h3 class="font-semibold">${escapeHtml(c.name)}</h3>
+                  <p class="mt-0.5 text-xs text-slate-500 line-clamp-2">${escapeHtml(c.certification)}</p>
+                  <p class="mt-1 text-xs text-slate-400">Exam: ${escapeHtml(c.examName)}</p>
+                </div>
+                <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${st.class}">${st.label}</span>
+              </div>
+              ${feeBlock}
+              <div class="mt-4">
+                <div class="flex justify-between text-xs">
+                  <span class="text-slate-500">Reimbursed attempts ${year}</span>
+                  <span class="font-semibold ${remaining === 0 ? 'text-amber-600' : 'text-surplus'}">${used} / ${MAX_REIMBURSED_ATTEMPTS_PER_YEAR}</span>
+                </div>
+                <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+                  <div class="h-full rounded-full ${remaining === 0 ? 'bg-amber-500' : 'bg-chime'}" style="width:${pct}%"></div>
+                </div>
+                <p class="mt-1 text-[10px] text-slate-500">${remaining === 0 ? 'Limit reached for this year' : `${remaining} reimbursed slot${remaining !== 1 ? 's' : ''} left`}</p>
+              </div>
+              <ul class="mt-3 space-y-1 border-t border-slate-100 pt-3 dark:border-slate-700">${attemptsList}</ul>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" data-log-attempt="${c.id}" class="text-xs font-medium text-chime hover:underline">Log attempt</button>
+                <button type="button" data-edit-cert="${c.id}" class="text-xs text-slate-500 hover:underline">Edit</button>
+                <button type="button" data-delete-cert="${c.id}" class="text-xs text-shortfall hover:underline">Delete</button>
+              </div>
+            </article>`;
+        }).join('');
+
+        grid.querySelectorAll('[data-log-attempt]').forEach((btn) => {
+          btn.addEventListener('click', () => openAttemptModal(null, btn.dataset.logAttempt));
+        });
+        grid.querySelectorAll('[data-edit-cert]').forEach((btn) => {
+          btn.addEventListener('click', () => openCertModal(btn.dataset.editCert));
+        });
+        grid.querySelectorAll('[data-delete-cert]').forEach((btn) => {
+          btn.addEventListener('click', () => deleteCertification(btn.dataset.deleteCert));
+        });
+      }
+
+      renderAttemptsTable();
+      renderDashboardCerts();
+      const linkSel = document.getElementById('expense-cert-link');
+      if (linkSel) populateCertSelect(linkSel);
+    }
+
+    function renderAttemptsTable() {
+      const tbody = document.getElementById('attempts-tbody');
+      const year = selectedExamYear;
+      const rows = examAttempts
+        .filter((a) => calendarYear(a.attemptDate) === year)
+        .sort((a, b) => b.attemptDate.localeCompare(a.attemptDate));
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-500">No exam attempts logged for ${year}.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((a) => {
+        const cert = getCertification(a.certificationId);
+        const reimbursedInYear = reimbursedAttemptsForCert(a.certificationId, year);
+        const slotNum = a.reimbursed ? reimbursedInYear.findIndex((x) => x.id === a.id) + 1 : 0;
+        const listFee = examFeeForCert(cert);
+        return `
+          <tr class="border-b border-slate-100 dark:border-slate-700">
+            <td class="px-4 py-3">
+              <span class="font-medium">${escapeHtml(cert?.name || 'Unknown')}</span>
+              <span class="block text-xs text-slate-500">${escapeHtml(cert?.examName || '')}</span>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">${a.attemptDate}</td>
+            <td class="px-4 py-3">${RESULT_LABELS[a.result] || a.result}</td>
+            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${listFee > 0 ? formatMoney(listFee) : '—'}</td>
+            <td class="px-4 py-3 font-medium">${formatMoney(a.cost)}</td>
+            <td class="px-4 py-3">${a.reimbursed ? '<span class="text-surplus">Yes</span>' : 'No'}</td>
+            <td class="px-4 py-3">${a.reimbursed && slotNum > 0 ? `${slotNum} of ${MAX_REIMBURSED_ATTEMPTS_PER_YEAR}` : '—'}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <button type="button" data-edit-attempt="${a.id}" class="text-chime hover:underline text-xs mr-2">Edit</button>
+              <button type="button" data-delete-attempt="${a.id}" class="text-shortfall hover:underline text-xs">Delete</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('[data-edit-attempt]').forEach((btn) => {
+        btn.addEventListener('click', () => openAttemptModal(btn.dataset.editAttempt));
+      });
+      tbody.querySelectorAll('[data-delete-attempt]').forEach((btn) => {
+        btn.addEventListener('click', () => deleteAttempt(btn.dataset.deleteAttempt));
+      });
+    }
+
+    function renderDashboardCerts() {
+      const summary = document.getElementById('dashboard-certs-summary');
+      const cards = document.getElementById('dashboard-certs-cards');
+      if (!summary || !cards) return;
+      const year = new Date().getFullYear();
+      const active = certifications.filter((c) => c.status === 'in_progress' || c.status === 'planned');
+
+      if (!active.length) {
+        summary.textContent = 'No certifications in progress. Add one under Certifications.';
+        cards.innerHTML = '';
+        return;
+      }
+
+      summary.textContent = `${active.length} certification${active.length !== 1 ? 's' : ''} in progress · ${year} reimbursement slots below`;
+      cards.innerHTML = active.slice(0, 6).map((c) => {
+        const used = reimbursedCountForCert(c.id, year);
+        const remaining = remainingReimbursedSlots(c.id, year);
+        const fee = examFeeForCert(c);
+        const stake = atStakeForCert(c.id, year);
+        return `
+          <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-600">
+            <p class="text-sm font-medium">${escapeHtml(c.name)}</p>
+            <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(c.examName)}</p>
+            ${fee > 0 ? `<p class="mt-1 text-xs text-slate-500">${formatMoney(fee)}/attempt · <span class="font-medium text-amber-700 dark:text-amber-300">${formatMoney(stake.stillAtStake)}</span> at stake</p>` : ''}
+            <p class="mt-2 text-xs"><span class="font-semibold ${remaining ? 'text-surplus' : 'text-amber-600'}">${used}/${MAX_REIMBURSED_ATTEMPTS_PER_YEAR}</span> reimbursed attempts used in ${year}</p>
+          </div>`;
+      }).join('');
+    }
+
+    function updateAttemptReimburseWarning() {
+      const warn = document.getElementById('attempt-reimburse-warning');
+      const certId = document.getElementById('attempt-cert-id').value;
+      const date = document.getElementById('attempt-date').value;
+      const reimbursed = document.getElementById('attempt-reimbursed').checked;
+      const attemptId = document.getElementById('attempt-id').value;
+      if (!warn || !certId || !date || !reimbursed) {
+        if (warn) warn.classList.add('hidden');
+        return;
+      }
+      const y = calendarYear(date);
+      if (!canMarkReimbursed(certId, y, attemptId || null)) {
+        warn.textContent = `This exam already has ${MAX_REIMBURSED_ATTEMPTS_PER_YEAR} reimbursed attempts in ${y}. Uncheck reimbursed or use a different year.`;
+        warn.classList.remove('hidden');
+      } else {
+        const left = remainingReimbursedSlots(certId, y, attemptId || null);
+        warn.textContent = `${left} reimbursed slot${left !== 1 ? 's' : ''} remaining for this exam in ${y}.`;
+        warn.classList.remove('hidden');
+      }
+    }
+
+    function openCertModal(id = null) {
+      document.getElementById('cert-form').reset();
+      document.getElementById('cert-modal-title').textContent = id ? 'Edit certification' : 'Add certification';
+      if (id) {
+        const c = getCertification(id);
+        if (!c) return;
+        document.getElementById('cert-id').value = c.id;
+        document.getElementById('cert-name').value = c.name;
+        document.getElementById('cert-title').value = c.certification;
+        document.getElementById('cert-exam-name').value = c.examName;
+        document.getElementById('cert-exam-fee').value = c.examFee ?? '';
+        document.getElementById('cert-status').value = c.status;
+        document.getElementById('cert-notes').value = c.notes || '';
+      } else {
+        document.getElementById('cert-id').value = '';
+        document.getElementById('cert-status').value = 'in_progress';
+      }
+      document.getElementById('cert-modal-overlay').classList.remove('hidden');
+      document.getElementById('cert-modal-overlay').classList.add('flex');
+    }
+
+    function closeCertModal() {
+      document.getElementById('cert-modal-overlay').classList.add('hidden');
+      document.getElementById('cert-modal-overlay').classList.remove('flex');
+    }
+
+    function openAttemptModal(id = null, preselectCertId = null) {
+      if (!certifications.length) {
+        alert('Add a certification first, then log exam attempts.');
+        openCertModal();
+        return;
+      }
+      document.getElementById('attempt-form').reset();
+      document.getElementById('attempt-modal-title').textContent = id ? 'Edit exam attempt' : 'Log exam attempt';
+      populateCertSelect(document.getElementById('attempt-cert-id'), false);
+      document.getElementById('attempt-date').value = formatDate(new Date());
+      document.getElementById('attempt-reimbursed').checked = true;
+      document.getElementById('attempt-create-expense').checked = !id;
+
+      if (id) {
+        const a = examAttempts.find((x) => x.id === id);
+        if (!a) return;
+        document.getElementById('attempt-id').value = a.id;
+        document.getElementById('attempt-cert-id').value = a.certificationId;
+        document.getElementById('attempt-date').value = a.attemptDate;
+        document.getElementById('attempt-result').value = a.result;
+        document.getElementById('attempt-cost').value = a.cost;
+        document.getElementById('attempt-reimbursed').checked = !!a.reimbursed;
+        document.getElementById('attempt-create-expense').checked = false;
+      } else {
+        document.getElementById('attempt-id').value = '';
+        if (preselectCertId) {
+          document.getElementById('attempt-cert-id').value = preselectCertId;
+          const cert = getCertification(preselectCertId);
+          if (cert?.examFee) document.getElementById('attempt-cost').value = cert.examFee;
+        }
+      }
+      updateAttemptReimburseWarning();
+      document.getElementById('attempt-modal-overlay').classList.remove('hidden');
+      document.getElementById('attempt-modal-overlay').classList.add('flex');
+    }
+
+    function closeAttemptModal() {
+      document.getElementById('attempt-modal-overlay').classList.add('hidden');
+      document.getElementById('attempt-modal-overlay').classList.remove('flex');
+    }
+
+    function deleteCertification(id) {
+      if (!confirm('Delete this certification and all its exam attempts?')) return;
+      certifications = certifications.filter((c) => c.id !== id);
+      examAttempts = examAttempts.filter((a) => a.certificationId !== id);
+      saveCertifications();
+      saveExamAttempts();
+      refreshAll();
+    }
+
+    function deleteAttempt(id) {
+      if (!confirm('Delete this exam attempt?')) return;
+      examAttempts = examAttempts.filter((a) => a.id !== id);
+      saveExamAttempts();
+      refreshAll();
+    }
+
+    /* ============================================================
+       UI: DASHBOARD STATS & CHIME PAGE
+       ============================================================ */
+    function renderStats() {
+      const incurredOnly = expenses.filter((e) => !e.upcoming || isExpenseIncurred(e, new Date()));
+      const totalCost = incurredOnly.reduce((s, e) => s + Number(e.cost), 0);
+      const upcomingTotal = totalUpcomingCost();
+      const upcomingCount = upcomingExpenses().length;
+      const owedToday = totalRepaymentAt(new Date());
+      const rows = projectChime(chimeSettings, 1);
+      const chimeEnd = rows[0]?.chimeBalance ?? chimeSettings.balance;
+      const derisk = monthsUntilDerisked();
+
+      document.getElementById('stat-total-expenses').textContent = formatMoney(totalCost);
+      document.getElementById('stat-expense-count').textContent = `${incurredOnly.length} incurred · ${expenses.length} total`;
+      const upcomingEl = document.getElementById('stat-upcoming-expenses');
+      if (upcomingEl) {
+        if (upcomingCount > 0) {
+          upcomingEl.textContent = `${formatMoney(upcomingTotal)} upcoming (${upcomingCount} planned exam${upcomingCount !== 1 ? 's' : ''})`;
+          upcomingEl.classList.remove('hidden');
+        } else {
+          upcomingEl.textContent = '';
+          upcomingEl.classList.add('hidden');
+        }
+      }
+      document.getElementById('stat-repayment-today').textContent = formatMoney(owedToday);
+      document.getElementById('stat-chime-balance').textContent = formatMoney(chimeEnd);
+      document.getElementById('stat-months-derisked').textContent =
+        derisk === null ? '48+' : derisk === 0 ? '0' : String(derisk);
+
+      const surplus = chimeEnd - owedToday;
+      const surplusEl = document.getElementById('chime-surplus-today');
+      if (surplusEl) {
+        surplusEl.textContent = formatMoney(surplus);
+        surplusEl.className = 'font-semibold ' + (surplus >= 0 ? 'text-surplus' : 'text-shortfall');
+      }
+      const reqEl = document.getElementById('chime-required-today');
+      if (reqEl) reqEl.textContent = formatMoney(owedToday);
+      const projEl = document.getElementById('chime-proj-month');
+      if (projEl) projEl.textContent = formatMoney(chimeEnd);
+      const rateEl = document.getElementById('chime-monthly-rate');
+      if (rateEl) rateEl.textContent = ((chimeSettings.apy / 12)).toFixed(3) + '%';
+      const contribEl = document.getElementById('chime-monthly-contribution');
+      if (contribEl) contribEl.textContent = formatPaycheckSummary(chimeSettings);
+    }
+
+    function updateChimeMonthlyLabels() {
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      const label = document.getElementById('chime-monthly-total-label');
+      if (label) label.textContent = formatPaycheckSummary(chimeSettings);
+      const contribEl = document.getElementById('chime-monthly-contribution');
+      if (contribEl) contribEl.textContent = formatPaycheckSummary(chimeSettings);
+    }
+
+    function bindChimeInputs() {
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      document.getElementById('chime-balance').value = chimeSettings.balance;
+      document.getElementById('chime-paycheck-amount').value = chimeSettings.paycheckAmount;
+      document.getElementById('chime-paychecks-per-month').value = chimeSettings.paychecksPerMonth;
+      document.getElementById('chime-apy').value = chimeSettings.apy;
+      document.getElementById('chime-stop-deposits').checked = chimeSettings.stopDepositsEnabled;
+      document.getElementById('chime-stop-date').value = chimeSettings.stopDepositsDate || '';
+      document.getElementById('stop-date-wrap').classList.toggle('opacity-50', !chimeSettings.stopDepositsEnabled);
+      updateChimeMonthlyLabels();
+
+      const override = document.getElementById('calendar-deposit-override');
+      if (override && !override.dataset.touched) override.value = chimeSettings.monthlyDeposit;
+    }
+
+    function readChimeFromInputs() {
+      chimeSettings.balance = parseFloat(document.getElementById('chime-balance').value) || 0;
+      chimeSettings.paycheckAmount = parseFloat(document.getElementById('chime-paycheck-amount').value) || 0;
+      chimeSettings.paychecksPerMonth = parseInt(document.getElementById('chime-paychecks-per-month').value, 10) || 0;
+      chimeSettings.apy = parseFloat(document.getElementById('chime-apy').value) || 0;
+      chimeSettings.stopDepositsEnabled = document.getElementById('chime-stop-deposits').checked;
+      chimeSettings.stopDepositsDate = document.getElementById('chime-stop-date').value;
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      saveChime();
+      updateChimeMonthlyLabels();
+    }
+
+    /* ============================================================
+       CHARTS (Chart.js)
+       ============================================================ */
+    function chartColors() {
+      const dark = document.documentElement.classList.contains('dark');
+      return {
+        grid: dark ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.25)',
+        text: dark ? '#94a3b8' : '#64748b',
+        chime: '#0ea5e9',
+        required: '#ef4444',
+      };
+    }
+
+    function buildChartConfig(labels, chimeData, requiredData) {
+      const c = chartColors();
+      return {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Chime balance',
+              data: chimeData,
+              borderColor: c.chime,
+              backgroundColor: 'rgba(14,165,233,0.1)',
+              fill: true,
+              tension: 0.3,
+            },
+            {
+              label: 'Required repayment',
+              data: requiredData,
+              borderColor: c.required,
+              backgroundColor: 'rgba(239,68,68,0.08)',
+              fill: true,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { labels: { color: c.text } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}`,
+              },
+            },
+          },
+          scales: {
+            x: { ticks: { color: c.text, maxTicksLimit: 12 }, grid: { color: c.grid } },
+            y: {
+              ticks: { color: c.text, callback: (v) => '$' + v.toLocaleString() },
+              grid: { color: c.grid },
+            },
+          },
+        },
+      };
+    }
+
+    function updateDashboardChart() {
+      const months = 36;
+      const rows = projectChime(chimeSettings, months);
+      const labels = rows.map((r) => r.label);
+      const chimeData = rows.map((r) => r.chimeBalance);
+      const requiredData = rows.map((r) => r.required);
+      const ctx = document.getElementById('chart-dashboard');
+      if (chartDashboard) chartDashboard.destroy();
+      chartDashboard = new Chart(ctx, buildChartConfig(labels, chimeData, requiredData));
+    }
+
+    function updateCalendarChart(rows) {
+      const labels = rows.map((r) => r.label);
+      const chimeData = rows.map((r) => r.chimeBalance);
+      const requiredData = rows.map((r) => r.required);
+      const ctx = document.getElementById('chart-calendar');
+      if (chartCalendar) chartCalendar.destroy();
+      chartCalendar = new Chart(ctx, buildChartConfig(labels, chimeData, requiredData));
+    }
+
+    /* ============================================================
+       ROLLING CALENDAR CARDS
+       ============================================================ */
+    function renderCalendar() {
+      const months = parseInt(document.getElementById('calendar-months').value, 10) || PROJECTION_MONTHS_DEFAULT;
+      const overrideVal = document.getElementById('calendar-deposit-override').value;
+      const depositOverride = overrideVal === '' ? null : parseFloat(overrideVal);
+      const rows = projectChime(chimeSettings, months, depositOverride);
+
+      updateCalendarChart(rows);
+
+      const container = document.getElementById('calendar-cards');
+      const maxRequired = Math.max(...rows.map((r) => r.required), 1);
+
+      container.innerHTML = rows.map((r) => {
+        const isSurplus = r.surplus >= 0;
+        const barPct = Math.min(100, (r.required / maxRequired) * 100);
+        const chimePct = Math.min(100, (r.chimeBalance / Math.max(r.chimeBalance, r.required, 1)) * 100);
+        return `
+          <article class="min-w-[200px] flex-shrink-0 rounded-xl border ${isSurplus ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-900'} bg-white p-4 shadow-sm dark:bg-slate-800">
+            <p class="text-sm font-semibold">${r.label}</p>
+            <div class="mt-3 space-y-2 text-xs">
+              <div>
+                <span class="text-slate-500">Chime</span>
+                <p class="font-semibold text-chime">${formatMoney(r.chimeBalance)}</p>
+              </div>
+              <div>
+                <span class="text-slate-500">Required min.</span>
+                <p class="font-medium">${formatMoney(r.required)}</p>
+              </div>
+              <div class="${isSurplus ? 'text-surplus' : 'text-shortfall'}">
+                <span class="text-slate-500">${isSurplus ? 'Surplus' : 'Shortfall'}</span>
+                <p class="font-bold">${formatMoney(Math.abs(r.surplus))}</p>
+              </div>
+            </div>
+            <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+              <div class="flex h-full">
+                <div class="bg-shortfall/70 h-full" style="width:${barPct}%"></div>
+              </div>
+            </div>
+            <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+              <div class="h-full bg-chime" style="width:${chimePct}%"></div>
+            </div>
+            ${!r.deposit && r.deposit !== undefined ? '<p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">No deposit this month</p>' : ''}
+          </article>`;
+      }).join('');
+    }
+
+    /* ============================================================
+       MODAL & CRUD
+       ============================================================ */
+    function openExpenseModal(id = null) {
+      const form = document.getElementById('expense-form');
+      form.reset();
+      document.getElementById('modal-title').textContent = id ? 'Edit Expense' : 'Add Expense';
+      document.getElementById('expense-date').value = formatDate(new Date());
+      populateCertSelect(document.getElementById('expense-cert-link'));
+
+      if (id) {
+        const e = expenses.find((x) => x.id === id);
+        if (!e) return;
+        document.getElementById('expense-id').value = e.id;
+        document.getElementById('expense-name').value = e.name;
+        document.getElementById('expense-cert').value = e.certification;
+        document.getElementById('expense-date').value = e.incurredDate;
+        document.getElementById('expense-cost').value = e.cost;
+        document.getElementById('expense-type').value = e.expenseType || 'course';
+        document.getElementById('expense-cert-link').value = e.certificationId || '';
+        document.getElementById('expense-upcoming').checked = !!e.upcoming;
+      } else {
+        document.getElementById('expense-id').value = '';
+        document.getElementById('expense-type').value = 'course';
+        document.getElementById('expense-upcoming').checked = false;
+      }
+
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function deleteExpense(id) {
+      if (!confirm('Delete this expense?')) return;
+      expenses = expenses.filter((e) => e.id !== id);
+      saveExpenses();
+      refreshAll();
+    }
+
+    /* ============================================================
+       NAVIGATION & THEME
+       ============================================================ */
+    const PAGE_TITLES = {
+      dashboard: 'Dashboard',
+      certifications: 'Certifications & Exams',
+      expenses: 'Expenses',
+      chime: 'Chime Simulator',
+      calendar: 'Rolling Calendar',
+    };
+
+    function navigate(page) {
+      document.querySelectorAll('[data-page]').forEach((el) => {
+        el.classList.toggle('active', el.dataset.page === page);
+      });
+      document.querySelectorAll('.nav-link').forEach((el) => {
+        el.classList.toggle('active', el.dataset.nav === page);
+      });
+      document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-overlay').classList.add('hidden');
+      if (page === 'calendar') setTimeout(renderCalendar, 50);
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem(STORAGE_THEME, isDark ? 'dark' : 'light');
+      refreshAll();
+    }
+
+    function refreshAll() {
+      renderExpensesTable();
+      renderCertificationsPage();
+      renderStats();
+      bindChimeInputs();
+      updateDashboardChart();
+      renderCalendar();
+      populateYearFilter();
+    }
+
+    /* ============================================================
+       EVENT LISTENERS
+       ============================================================ */
+    function initEvents() {
+      document.querySelectorAll('[data-nav]').forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          navigate(link.dataset.nav);
+        });
+      });
+
+      document.getElementById('menu-btn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('sidebar-overlay').classList.toggle('hidden');
+      });
+      document.getElementById('sidebar-overlay').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+        document.getElementById('sidebar-overlay').classList.add('hidden');
+      });
+
+      document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+      document.getElementById('btn-add-expense').addEventListener('click', () => openExpenseModal());
+      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+      document.getElementById('modal-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-overlay') closeModal();
+      });
+
+      document.getElementById('expense-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('expense-id').value;
+        const certLinkId = document.getElementById('expense-cert-link').value;
+        const linkedCert = certLinkId ? getCertification(certLinkId) : null;
+        const payload = {
+          id: id || `exp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          name: document.getElementById('expense-name').value.trim(),
+          certification: document.getElementById('expense-cert').value.trim(),
+          incurredDate: document.getElementById('expense-date').value,
+          cost: parseFloat(document.getElementById('expense-cost').value),
+          expenseType: document.getElementById('expense-type').value,
+          certificationId: certLinkId || null,
+          upcoming: document.getElementById('expense-upcoming').checked,
+        };
+        if (linkedCert && payload.expenseType === 'exam' && !payload.certification) {
+          payload.certification = linkedCert.certification;
+        }
+        if (id) {
+          const idx = expenses.findIndex((x) => x.id === id);
+          if (idx >= 0) expenses[idx] = payload;
+        } else {
+          expenses.push(payload);
+        }
+        saveExpenses();
+        closeModal();
+        refreshAll();
+      });
+
+      document.getElementById('btn-export').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify({ expenses, chimeSettings, certifications, examAttempts }, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `education-repayment-backup-${formatDate(new Date())}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file').click());
+      document.getElementById('import-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (Array.isArray(data)) expenses = data;
+            else {
+              if (data.expenses) expenses = data.expenses;
+              if (data.chimeSettings) chimeSettings = normalizeChimeSettings(data.chimeSettings);
+              if (data.certifications) certifications = data.certifications;
+              if (data.examAttempts) examAttempts = data.examAttempts;
+            }
+            saveExpenses();
+            saveChime();
+            saveCertifications();
+            saveExamAttempts();
+            refreshAll();
+            alert('Import successful.');
+          } catch {
+            alert('Invalid JSON file.');
+          }
+          e.target.value = '';
+        };
+        reader.readAsText(file);
+      });
+
+      document.getElementById('btn-clear-all').addEventListener('click', () => {
+        if (!confirm('Clear ALL data (expenses, certifications, exam attempts) and reset Chime settings? This cannot be undone.')) return;
+        expenses = [];
+        certifications = [];
+        examAttempts = [];
+        chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME });
+        localStorage.removeItem(STORAGE_DATA_VERSION);
+        saveExpenses();
+        saveCertifications();
+        saveExamAttempts();
+        saveChime();
+        document.getElementById('calendar-deposit-override').dataset.touched = '';
+        refreshAll();
+      });
+
+      ['chime-balance', 'chime-paycheck-amount', 'chime-paychecks-per-month', 'chime-apy', 'chime-stop-deposits', 'chime-stop-date'].forEach((id) => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => {
+          readChimeFromInputs();
+          document.getElementById('stop-date-wrap').classList.toggle('opacity-50', !chimeSettings.stopDepositsEnabled);
+          refreshAll();
+        });
+        el.addEventListener('change', () => {
+          readChimeFromInputs();
+          refreshAll();
+        });
+      });
+
+      document.getElementById('calendar-deposit-override').addEventListener('input', (e) => {
+        e.target.dataset.touched = '1';
+        renderStats();
+        renderCalendar();
+        updateDashboardChart();
+      });
+
+      document.getElementById('btn-sync-deposit').addEventListener('click', () => {
+        const el = document.getElementById('calendar-deposit-override');
+        el.value = getMonthlyDeposit(chimeSettings);
+        el.dataset.touched = '';
+        renderCalendar();
+        updateDashboardChart();
+      });
+
+      document.getElementById('calendar-months').addEventListener('change', renderCalendar);
+
+      document.getElementById('btn-add-cert').addEventListener('click', () => openCertModal());
+      document.getElementById('btn-add-attempt').addEventListener('click', () => openAttemptModal());
+      document.getElementById('cert-modal-cancel').addEventListener('click', closeCertModal);
+      document.getElementById('attempt-modal-cancel').addEventListener('click', closeAttemptModal);
+      document.getElementById('cert-modal-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'cert-modal-overlay') closeCertModal();
+      });
+      document.getElementById('attempt-modal-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'attempt-modal-overlay') closeAttemptModal();
+      });
+
+      document.getElementById('exam-year-filter').addEventListener('change', (e) => {
+        selectedExamYear = parseInt(e.target.value, 10);
+        renderCertificationsPage();
+      });
+
+      ['attempt-cert-id', 'attempt-date', 'attempt-reimbursed'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateAttemptReimburseWarning);
+        if (el) el.addEventListener('change', updateAttemptReimburseWarning);
+      });
+
+      document.getElementById('cert-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('cert-id').value;
+        const payload = {
+          id: id || `cert-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          name: document.getElementById('cert-name').value.trim(),
+          certification: document.getElementById('cert-title').value.trim(),
+          examName: document.getElementById('cert-exam-name').value.trim(),
+          examFee: parseFloat(document.getElementById('cert-exam-fee').value) || 0,
+          status: document.getElementById('cert-status').value,
+          notes: document.getElementById('cert-notes').value.trim(),
+        };
+        if (id) {
+          const idx = certifications.findIndex((x) => x.id === id);
+          if (idx >= 0) certifications[idx] = payload;
+        } else {
+          certifications.push(payload);
+        }
+        saveCertifications();
+        closeCertModal();
+        refreshAll();
+      });
+
+      document.getElementById('attempt-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('attempt-id').value;
+        const certId = document.getElementById('attempt-cert-id').value;
+        const attemptDate = document.getElementById('attempt-date').value;
+        const reimbursed = document.getElementById('attempt-reimbursed').checked;
+        const year = calendarYear(attemptDate);
+
+        if (reimbursed && !canMarkReimbursed(certId, year, id || null)) {
+          alert(`Cannot mark reimbursed: this exam already has ${MAX_REIMBURSED_ATTEMPTS_PER_YEAR} reimbursed attempts in ${year}.`);
+          return;
+        }
+
+        const cert = getCertification(certId);
+        const attemptPayload = {
+          id: id || `att-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          certificationId: certId,
+          attemptDate,
+          cost: parseFloat(document.getElementById('attempt-cost').value),
+          result: document.getElementById('attempt-result').value,
+          reimbursed,
+        };
+
+        if (id) {
+          const idx = examAttempts.findIndex((x) => x.id === id);
+          if (idx >= 0) examAttempts[idx] = attemptPayload;
+        } else {
+          examAttempts.push(attemptPayload);
+        }
+        saveExamAttempts();
+
+        if (!id && document.getElementById('attempt-create-expense').checked && cert) {
+          expenses.push({
+            id: `exp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            name: `${cert.name} exam attempt`,
+            certification: cert.certification,
+            incurredDate: attemptDate,
+            cost: attemptPayload.cost,
+            expenseType: 'exam',
+            certificationId: certId,
+          });
+          saveExpenses();
+        }
+
+        closeAttemptModal();
+        refreshAll();
+      });
+
+      document.querySelectorAll('[data-nav-jump]').forEach((btn) => {
+        btn.addEventListener('click', () => navigate(btn.dataset.navJump));
+      });
+    }
+
+    /* ============================================================
+       BOOT
+       ============================================================ */
+    loadData();
+    initEvents();
+    refreshAll();
+  </script>
+</body>
+</html>
