@@ -466,12 +466,12 @@
     const STORAGE_CERTIFICATIONS = 'eduRepayment_certifications';
     const STORAGE_EXAM_ATTEMPTS = 'eduRepayment_examAttempts';
     const STORAGE_DATA_VERSION = 'eduRepayment_dataVersion';
-    const DATA_VERSION = 6;
+    const DATA_VERSION = 7;
     const PROJECTION_MONTHS_DEFAULT = 48;
     const MAX_REIMBURSED_ATTEMPTS_PER_YEAR = 2;
 
     const DEFAULT_CHIME = {
-      balance: 2400,
+      balance: 400,
       paycheckAmount: 200,
       paychecksPerMonth: 2,
       monthlyDeposit: 400,
@@ -592,6 +592,18 @@
           cissp.status = 'in_progress';
           cissp.notes = 'Bootcamp paid Aug 2025; exam upcoming';
           saveCertifications();
+        }
+      }
+      if (fromVersion < 7) {
+        const chimeRaw = localStorage.getItem(STORAGE_CHIME);
+        if (chimeRaw) {
+          try {
+            const parsed = normalizeChimeSettings(JSON.parse(chimeRaw));
+            if (Number(parsed.balance) === 2400) {
+              parsed.balance = 400;
+              localStorage.setItem(STORAGE_CHIME, JSON.stringify(parsed));
+            }
+          } catch { /* keep existing */ }
         }
       }
     }
@@ -956,6 +968,10 @@
         try { chimeSettings = normalizeChimeSettings(JSON.parse(chimeRaw)); } catch { chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME }); }
       } else {
         chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME });
+        saveChime();
+      }
+      if (Number(chimeSettings.balance) === 2400) {
+        chimeSettings.balance = 400;
         saveChime();
       }
 
