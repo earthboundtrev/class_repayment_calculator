@@ -1,6 +1,6 @@
 # class_repayment_calculator
 
-Personal **Education Repayment & Chime Fund Visualizer** — track company-reimbursed training clawback, exam attempts, and Chime savings projections.
+Personal **Debt & Cashflow Visualizer** — track credit cards, medical debt, education clawback, income, Chime savings, and rolling projections.
 
 ## Deploy
 

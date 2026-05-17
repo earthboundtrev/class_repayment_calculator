@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Education Repayment & Chime Fund Visualizer</title>
+  <title>Debt & Cashflow Visualizer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -33,6 +34,8 @@
     .calendar-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
     .calendar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     .dark .calendar-scroll::-webkit-scrollbar-thumb { background: #475569; }
+    .filter-tab.active { background: rgb(14 165 233 / 0.12); color: #0284c7; font-weight: 600; box-shadow: inset 0 -2px 0 #0ea5e9; }
+    .dark .filter-tab.active { background: rgb(14 165 233 / 0.2); color: #38bdf8; box-shadow: inset 0 -2px 0 #38bdf8; }
   </style>
 </head>
 <body class="h-full bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans antialiased">
@@ -43,12 +46,16 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white shadow-lg transition-transform lg:static lg:translate-x-0 dark:border-slate-700 dark:bg-slate-800">
       <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-700">
         <svg class="h-8 w-8 text-chime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <span class="text-sm font-semibold leading-tight">Repayment &<br/>Chime Visualizer</span>
+        <span class="text-sm font-semibold leading-tight">Debt &amp;<br/>Cashflow Visualizer</span>
       </div>
       <nav class="space-y-1 p-3" id="main-nav">
         <a href="#" data-nav="dashboard" class="nav-link active flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
           Dashboard
+        </a>
+        <a href="#" data-nav="cashflow" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+          Cashflow
         </a>
         <a href="#" data-nav="certifications" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
@@ -60,7 +67,7 @@
         </a>
         <a href="#" data-nav="chime" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-          Chime Simulator
+          Chime &amp; HSA
         </a>
         <a href="#" data-nav="calendar" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -89,41 +96,159 @@
         <button id="menu-btn" class="rounded-lg p-2 hover:bg-slate-100 lg:hidden dark:hover:bg-slate-700" aria-label="Open menu">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <h1 id="page-title" class="text-lg font-semibold">Dashboard</h1>
+        <div class="min-w-0 flex-1">
+          <h1 id="page-title" class="text-lg font-semibold truncate">Dashboard</h1>
+          <p id="filter-subtitle" class="text-xs text-slate-500 truncate hidden sm:block">All categories</p>
+        </div>
+        <div class="flex items-center gap-2">
+        <button id="btn-export-header" type="button" class="hidden sm:inline-flex rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700" title="Export JSON">Export</button>
+        <button id="btn-import-header" type="button" class="hidden sm:inline-flex rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700" title="Import JSON">Import</button>
         <button id="theme-toggle" class="rounded-lg border border-slate-200 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700" aria-label="Toggle dark mode">
           <svg id="icon-sun" class="h-5 w-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           <svg id="icon-moon" class="h-5 w-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>
+        </div>
       </header>
+
+      <!-- Category filter: All | Education | Credit | Health -->
+      <div class="sticky top-16 z-10 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 lg:px-8">
+        <div id="category-filter" class="flex flex-wrap gap-1" role="tablist" aria-label="Debt category filter">
+          <button type="button" data-filter="all" class="filter-tab active inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"><i data-lucide="layers" class="h-4 w-4"></i>All</button>
+          <button type="button" data-filter="education" class="filter-tab inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"><i data-lucide="graduation-cap" class="h-4 w-4"></i>Education</button>
+          <button type="button" data-filter="credit" class="filter-tab inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"><i data-lucide="credit-card" class="h-4 w-4"></i>Credit Cards</button>
+          <button type="button" data-filter="health" class="filter-tab inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"><i data-lucide="heart-pulse" class="h-4 w-4"></i>Health / Medical</button>
+        </div>
+      </div>
 
       <main class="flex-1 p-4 lg:p-8">
 
         <!-- ========== DASHBOARD ========== -->
         <section data-page="dashboard" class="active space-y-6">
-          <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total expenses tracked</p>
-              <p id="stat-total-expenses" class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">$0</p>
-              <p id="stat-expense-count" class="mt-1 text-sm text-slate-500">0 items</p>
-              <p id="stat-upcoming-expenses" class="mt-1 text-sm text-amber-600 dark:text-amber-400 hidden"></p>
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total debt</p>
+              <p id="stat-total-debt" class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">$0</p>
+              <p id="stat-debt-detail" class="mt-1 text-sm text-slate-500">Balances + clawback</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Owed if you leave today</p>
-              <p id="stat-repayment-today" class="mt-2 text-2xl font-bold text-shortfall">$0</p>
-              <p class="mt-1 text-sm text-slate-500">Voluntary departure clawback</p>
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Monthly income (gross)</p>
+              <p id="stat-monthly-income" class="mt-2 text-2xl font-bold text-surplus">$0</p>
+              <p id="stat-income-detail" class="mt-1 text-sm text-slate-500">Paycheck + other</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Chime projected balance</p>
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Monthly debt service</p>
+              <p id="stat-debt-service" class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">$0</p>
+              <p class="mt-1 text-sm text-slate-500">Min payments + Chime</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Chime (end of month)</p>
               <p id="stat-chime-balance" class="mt-2 text-2xl font-bold text-chime">$0</p>
-              <p class="mt-1 text-sm text-slate-500">Current + growth to month end</p>
+              <p class="mt-1 text-sm text-slate-500">Deposits + APY interest</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Months until de-risked</p>
-              <p id="stat-months-derisked" class="mt-2 text-2xl font-bold text-surplus">—</p>
-              <p class="mt-1 text-sm text-slate-500">Required balance → $0</p>
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Required reserve</p>
+              <p id="stat-repayment-today" class="mt-2 text-2xl font-bold text-shortfall">$0</p>
+              <p id="stat-reserve-detail" class="mt-1 text-sm text-slate-500">If triggered today</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Surplus / shortfall</p>
+              <p id="stat-surplus-month" class="mt-2 text-2xl font-bold text-surplus">$0</p>
+              <p class="mt-1 text-sm text-slate-500">Chime vs reserve (this month)</p>
             </div>
           </div>
-          <div id="dashboard-certs-panel" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <p id="stat-upcoming-expenses" class="text-sm text-amber-600 dark:text-amber-400 hidden -mt-2"></p>
+          <p id="stat-months-derisked-wrap" class="text-sm text-slate-500 hidden"><span class="font-medium text-surplus" id="stat-months-derisked">—</span> months until education clawback de-risked</p>
+
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+              <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Debt &amp; obligations</h2>
+              <button type="button" id="btn-add-debt" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white shadow hover:bg-chime-dark">+ Add debt</button>
+            </div>
+            <table class="min-w-full text-left text-sm">
+              <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+                <tr>
+                  <th class="px-4 py-3">Name</th>
+                  <th class="px-4 py-3">Category</th>
+                  <th class="px-4 py-3">Balance</th>
+                  <th class="px-4 py-3 hidden md:table-cell">APR</th>
+                  <th class="px-4 py-3 hidden lg:table-cell">Promo until</th>
+                  <th class="px-4 py-3 hidden sm:table-cell">Est. mo. interest</th>
+                  <th class="px-4 py-3 hidden lg:table-cell">Time obligation</th>
+                  <th class="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="debts-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold">Income &amp; cashflow</h2>
+              <div class="space-y-4">
+                <label class="block text-sm">
+                  <span class="text-slate-600 dark:text-slate-400">IT job paycheck (bi-weekly $)</span>
+                  <input type="number" id="income-biweekly" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+                <label class="block text-sm">
+                  <span class="text-slate-600 dark:text-slate-400">Additional monthly income ($)</span>
+                  <input type="number" id="income-additional" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+                <label class="block text-sm">
+                  <span class="text-slate-600 dark:text-slate-400">Other monthly expenses ($)</span>
+                  <input type="number" id="income-living-expenses" min="0" step="100" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                  <span class="mt-1 block text-xs text-slate-500">Living costs besides Chime, HSA, and debt payments</span>
+                </label>
+                <label class="block text-sm">
+                  <span class="text-slate-600 dark:text-slate-400">Extra monthly debt payment ($)</span>
+                  <input type="number" id="income-extra-debt" min="0" step="50" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+                <dl class="rounded-xl bg-slate-50 p-3 text-sm dark:bg-slate-900/50 space-y-2">
+                  <div class="flex justify-between"><dt class="text-slate-500">Avg paychecks / month</dt><dd id="income-paychecks-avg" class="font-medium">2.17</dd></div>
+                  <div class="flex justify-between"><dt class="text-slate-500">From paychecks</dt><dd id="income-from-pay" class="font-medium">—</dd></div>
+                  <div class="flex justify-between border-t border-slate-200 pt-2 dark:border-slate-600"><dt class="font-medium">Gross monthly</dt><dd id="income-gross-display" class="font-bold text-surplus">—</dd></div>
+                </dl>
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30 space-y-3">
+                  <h3 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2"><i data-lucide="heart-pulse" class="h-4 w-4"></i> HSA contributions</h3>
+                  <label class="block text-sm">
+                    <span class="text-slate-600 dark:text-slate-400">Current HSA balance ($)</span>
+                    <input type="number" id="hsa-balance" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                  </label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <label class="block text-sm">
+                      <span class="text-slate-600 dark:text-slate-400">Per paycheck ($)</span>
+                      <input type="number" id="hsa-per-paycheck" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    </label>
+                    <label class="block text-sm">
+                      <span class="text-slate-600 dark:text-slate-400">Paychecks / month</span>
+                      <input type="number" id="hsa-paychecks-per-month" min="0" max="5" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    </label>
+                  </div>
+                  <label class="block text-sm">
+                    <span class="text-slate-600 dark:text-slate-400">Quarterly bonus ($, end of Mar/Jun/Sep/Dec)</span>
+                    <input type="number" id="hsa-quarterly-bonus" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                  </label>
+                  <label class="block text-sm">
+                    <span class="text-slate-600 dark:text-slate-400">First HSA deposit date</span>
+                    <input type="date" id="hsa-deposits-started" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    <span class="mt-1 block text-xs text-slate-500">Every 14 days from this date (same pattern as Chime paychecks).</span>
+                  </label>
+                  <p id="hsa-monthly-summary" class="text-xs font-medium text-emerald-700 dark:text-emerald-300">—</p>
+                  <p id="hsa-proj-month" class="text-sm"><span class="text-slate-500">Projected balance (month-end):</span> <strong class="text-emerald-600 dark:text-emerald-400">—</strong></p>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-2 text-sm font-semibold">What-if: Chime transfer</h2>
+              <p class="mb-4 text-xs text-slate-500">Slide to simulate monthly Chime contribution without saving settings.</p>
+              <label class="block text-sm">
+                <span class="text-slate-600 dark:text-slate-400">Monthly Chime deposit: <strong id="whatif-chime-label">$400</strong></span>
+                <input type="range" id="whatif-chime-slider" min="0" max="1500" step="25" value="400" class="mt-2 w-full accent-chime" />
+              </label>
+              <p class="mt-4 text-xs text-slate-500">Saved setting: <span id="whatif-chime-saved" class="font-medium text-chime">—</span> · Updates charts instantly</p>
+            </div>
+          </div>
+
+          <div id="dashboard-certs-panel" data-show-filter="education" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Certifications in progress</h2>
               <div class="flex items-center gap-1" id="dashboard-certs-nav">
@@ -140,11 +265,61 @@
             <p id="dashboard-certs-summary" class="text-sm text-slate-500"></p>
             <div id="dashboard-certs-cards" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
           </div>
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Required repayment vs. Chime balance (36 months)</h2>
-            <div class="h-72 sm:h-80">
-              <canvas id="chart-dashboard"></canvas>
+          <div class="grid gap-6 xl:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Chime vs. required reserve</h2>
+              <div class="h-72 sm:h-80">
+                <canvas id="chart-dashboard"></canvas>
+              </div>
             </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Debt payoff by category</h2>
+              <div class="h-72 sm:h-80">
+                <canvas id="chart-debt-stack"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== CASHFLOW ========== -->
+        <section data-page="cashflow" class="space-y-6">
+          <p class="text-sm text-slate-500">Monthly money in vs. committed outflows. Paycheck is what lands in your main account; Chime and HSA are separate transfers. Respects the category filter above.</p>
+          <div class="grid gap-4 sm:grid-cols-3">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Money in (monthly)</p>
+              <p id="cf-total-in" class="mt-2 text-2xl font-bold text-surplus">$0</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Committed out (monthly)</p>
+              <p id="cf-total-out" class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">$0</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Estimated surplus</p>
+              <p id="cf-surplus" class="mt-2 text-2xl font-bold text-surplus">$0</p>
+              <p id="cf-surplus-note" class="mt-1 text-xs text-slate-500">After living costs, earmarks &amp; min payments</p>
+            </div>
+          </div>
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold text-surplus flex items-center gap-2">
+                <i data-lucide="arrow-down-circle" class="h-4 w-4"></i> Income
+              </h2>
+              <ul id="cf-income-list" class="space-y-2 text-sm"></ul>
+              <p class="mt-4 border-t border-slate-200 pt-3 text-sm dark:border-slate-700">
+                <button type="button" data-nav-jump="dashboard" class="text-chime text-xs font-medium hover:underline">Edit income on Dashboard →</button>
+              </p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h2 class="mb-4 text-sm font-semibold text-shortfall flex items-center gap-2">
+                <i data-lucide="arrow-up-circle" class="h-4 w-4"></i> Outflows
+              </h2>
+              <ul id="cf-outflow-list" class="space-y-2 text-sm"></ul>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <h2 class="mb-4 text-sm font-semibold">Waterfall (monthly)</h2>
+            <div id="cf-waterfall" class="space-y-2"></div>
+            <p id="cf-filter-note" class="mt-4 text-xs text-slate-500"></p>
           </div>
         </section>
 
@@ -309,6 +484,58 @@
               <p class="mt-4 text-xs text-slate-500">Balance is as of today. Remaining biweekly deposits this month are added, then interest (APY÷12) at month-end.</p>
             </div>
           </div>
+          <div class="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm dark:border-emerald-800 dark:bg-slate-800">
+            <h2 class="mb-4 text-sm font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-2"><i data-lucide="heart-pulse" class="h-4 w-4"></i> HSA account settings</h2>
+            <div class="grid gap-6 lg:grid-cols-2">
+              <div class="space-y-4">
+                <label class="block">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Current HSA balance ($)</span>
+                  <input type="number" id="hsa-page-balance" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+                <div class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                  <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Employer HSA per paycheck</p>
+                  <div class="mt-3 grid grid-cols-2 gap-3">
+                    <label class="block text-sm">
+                      <span class="text-slate-600 dark:text-slate-400">Per paycheck ($)</span>
+                      <input type="number" id="hsa-page-per-paycheck" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    </label>
+                    <label class="block text-sm">
+                      <span class="text-slate-600 dark:text-slate-400">Paychecks / month</span>
+                      <input type="number" id="hsa-page-paychecks-per-month" min="0" max="5" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                    </label>
+                  </div>
+                  <p id="hsa-page-monthly-summary" class="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">—</p>
+                </div>
+                <label class="block">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Quarterly bonus ($)</span>
+                  <input type="number" id="hsa-page-quarterly-bonus" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                  <span class="mt-1 block text-xs text-slate-500">Credited at month-end in March, June, September, and December.</span>
+                </label>
+                <label class="block">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">First HSA deposit date</span>
+                  <input type="date" id="hsa-page-deposits-started" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+                </label>
+              </div>
+              <dl class="space-y-3 text-sm">
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700 gap-4">
+                  <dt class="text-slate-500">Monthly from paychecks</dt>
+                  <dd id="hsa-page-monthly-pay" class="font-medium text-emerald-600">—</dd>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700 gap-4">
+                  <dt class="text-slate-500">Quarterly bonus</dt>
+                  <dd id="hsa-page-quarterly-display" class="font-medium">—</dd>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
+                  <dt class="text-slate-500">Balance at end of current month</dt>
+                  <dd id="hsa-page-proj-month" class="font-semibold text-emerald-600">—</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-slate-500">Typical year (paychecks + 4 bonuses)</dt>
+                  <dd id="hsa-page-annual-est" class="font-medium">—</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
         </section>
 
         <!-- ========== ROLLING CALENDAR ========== -->
@@ -333,7 +560,13 @@
             </label>
           </div>
           <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <h2 class="mb-4 text-sm font-semibold">Required vs. Chime balance (rolling period)</h2>
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-sm font-semibold">Projection chart</h2>
+              <label class="flex items-center gap-2 text-xs">
+                <input type="checkbox" id="chart-show-total-debt" class="rounded border-slate-300" checked />
+                <span>Show total debt line</span>
+              </label>
+            </div>
             <div class="h-72 sm:h-96">
               <canvas id="chart-calendar"></canvas>
             </div>
@@ -344,8 +577,48 @@
       </main>
 
       <footer class="border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 dark:border-slate-700 lg:px-8">
-        Data saved in browser • No backend • Private
+        Debt &amp; Cashflow Visualizer · Data saved in browser · No backend · Private
       </footer>
+    </div>
+  </div>
+
+  <!-- ========== DEBT MODAL ========== -->
+  <div id="debt-modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+      <h3 id="debt-modal-title" class="text-lg font-semibold">Add debt</h3>
+      <form id="debt-form" class="mt-4 space-y-3">
+        <input type="hidden" id="debt-id" />
+        <label class="block text-sm">Category
+          <select required id="debt-category" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
+            <option value="Credit">Credit</option>
+            <option value="Health">Health</option>
+            <option value="Education">Education</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label class="block text-sm">Name
+          <input required id="debt-name" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" placeholder="AmEx Platinum" />
+        </label>
+        <label class="block text-sm">Current balance ($)
+          <input required type="number" min="0" step="0.01" id="debt-balance" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Interest rate APR (%)
+          <input type="number" min="0" max="100" step="0.01" id="debt-apr" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Promo end date (optional, 0% until)
+          <input type="date" id="debt-promo-end" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Minimum monthly payment ($, optional)
+          <input type="number" min="0" step="0.01" id="debt-min-payment" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
+        </label>
+        <label class="block text-sm">Notes (optional)
+          <textarea id="debt-notes" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"></textarea>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="debt-modal-cancel" class="rounded-lg px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="rounded-lg bg-chime px-4 py-2 text-sm font-medium text-white">Save</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -483,8 +756,12 @@
     const STORAGE_THEME = 'eduRepayment_theme';
     const STORAGE_CERTIFICATIONS = 'eduRepayment_certifications';
     const STORAGE_EXAM_ATTEMPTS = 'eduRepayment_examAttempts';
+    const STORAGE_DEBTS = 'eduRepayment_debts';
+    const STORAGE_INCOME = 'eduRepayment_income';
+    const STORAGE_HSA = 'eduRepayment_hsa';
     const STORAGE_DATA_VERSION = 'eduRepayment_dataVersion';
-    const DATA_VERSION = 9;
+    const DATA_VERSION = 14;
+    const PAYCHECKS_PER_MONTH_AVG = 2.166;
     const PROJECTION_MONTHS_DEFAULT = 48;
     const MAX_REIMBURSED_ATTEMPTS_PER_YEAR = 2;
     const DASHBOARD_CERTS_PER_PAGE = 6;
@@ -500,6 +777,29 @@
       stopDepositsEnabled: false,
       stopDepositsDate: '',
     };
+
+
+    const DEFAULT_INCOME = {
+      biweeklyPay: 3651.65,
+      additionalMonthly: 1000,
+      monthlyLivingExpenses: 5000,
+      extraDebtPayment: 0,
+    };
+
+    const DEFAULT_HSA = {
+      balance: 0,
+      perPaycheck: 300,
+      paychecksPerMonth: 2,
+      paycheckIntervalDays: 14,
+      depositsStartedDate: '',
+      quarterlyBonus: 100,
+    };
+
+    const DEFAULT_DEBTS = [
+      { id: 'debt-amex', category: 'Credit', name: 'AmEx Platinum', balance: 14774, apr: 18, promoEndDate: '', minPayment: null, notes: '' },
+      { id: 'debt-usaa', category: 'Credit', name: 'USAA Visa', balance: 7117, apr: 0, promoEndDate: '2025-12-18', minPayment: null, notes: '0% promo until Dec 18' },
+      { id: 'debt-medical', category: 'Health', name: 'Medical — Urgent Care', balance: 3000, apr: 0, promoEndDate: '', minPayment: 50, notes: '' },
+    ];
 
     function defaultDepositsStartedDate() {
       const d = new Date();
@@ -582,6 +882,39 @@
       return `${formatMoney(paycheckAmount)} × ${paychecksPerMonth} paycheck${paychecksPerMonth !== 1 ? 's' : ''}/mo = ${formatMoney(monthlyDeposit)}/mo`;
     }
 
+    /** HSA — employer contributions per paycheck + bonus at calendar quarter-end (Mar/Jun/Sep/Dec). */
+    function normalizeHsaSettings(settings) {
+      const s = { ...DEFAULT_HSA, ...settings };
+      s.perPaycheck = Math.max(0, Number(s.perPaycheck) || 0);
+      s.paychecksPerMonth = Math.max(0, Number(s.paychecksPerMonth) || 0);
+      s.paycheckIntervalDays = Math.max(1, Number(s.paycheckIntervalDays) || 14);
+      s.quarterlyBonus = Math.max(0, Number(s.quarterlyBonus) || 0);
+      if (!s.depositsStartedDate) s.depositsStartedDate = defaultDepositsStartedDate();
+      s.monthlyFromPaychecks = s.perPaycheck * s.paychecksPerMonth;
+      return s;
+    }
+
+    function isQuarterEndMonth(monthStart) {
+      const m = monthStart.getMonth();
+      return m === 2 || m === 5 || m === 8 || m === 11;
+    }
+
+    function formatHsaSummary(settings) {
+      const s = normalizeHsaSettings(settings);
+      const base = `${formatMoney(s.perPaycheck)} × ${s.paychecksPerMonth} paycheck${s.paychecksPerMonth !== 1 ? 's' : ''}/mo = ${formatMoney(s.monthlyFromPaychecks)}/mo`;
+      if (!s.quarterlyBonus) return base;
+      return `${base} + ${formatMoney(s.quarterlyBonus)} at quarter-end (Mar/Jun/Sep/Dec)`;
+    }
+
+    function getMonthlyHsaFromPaychecks(settings) {
+      return normalizeHsaSettings(settings).monthlyFromPaychecks;
+    }
+
+    function monthlyHsaContribution(settings = hsaSettings) {
+      const s = normalizeHsaSettings(settings);
+      return s.monthlyFromPaychecks + (s.quarterlyBonus * 4) / 12;
+    }
+
     /**
      * Default data — your earned training + exams, plus upcoming exams from
      * cloudcramquizzes.netlify.app (OCI omitted — free cert, not tracked here).
@@ -658,9 +991,15 @@
       expenses = JSON.parse(JSON.stringify(DEFAULT_EXPENSES));
       certifications = JSON.parse(JSON.stringify(DEFAULT_CERTIFICATIONS));
       examAttempts = JSON.parse(JSON.stringify(DEFAULT_EXAM_ATTEMPTS));
+      debts = JSON.parse(JSON.stringify(DEFAULT_DEBTS));
+      incomeSettings = { ...DEFAULT_INCOME };
+      hsaSettings = normalizeHsaSettings({ ...DEFAULT_HSA });
       saveExpenses();
       saveCertifications();
       saveExamAttempts();
+      saveDebts();
+      saveIncome();
+      saveHsa();
     }
 
     /** Add records introduced in a new data version without wiping existing saves. */
@@ -750,6 +1089,51 @@
         saveExamAttempts();
         saveCertifications();
       }
+      if (fromVersion < 10) {
+        const debtsRaw = localStorage.getItem(STORAGE_DEBTS);
+        if (!debtsRaw) {
+          debts = JSON.parse(JSON.stringify(DEFAULT_DEBTS));
+          saveDebts();
+        }
+        const incomeRaw = localStorage.getItem(STORAGE_INCOME);
+        if (!incomeRaw) {
+          incomeSettings = { ...DEFAULT_INCOME };
+          saveIncome();
+        }
+      }
+      if (fromVersion < 11) {
+        const hsaRaw = localStorage.getItem(STORAGE_HSA);
+        if (!hsaRaw) {
+          hsaSettings = normalizeHsaSettings({ ...DEFAULT_HSA });
+          saveHsa();
+        }
+      }
+      if (fromVersion < 12) {
+        const medical = debts.find((d) => d.id === 'debt-medical');
+        if (medical) medical.balance = 3000;
+        else {
+          debts.push(JSON.parse(JSON.stringify(DEFAULT_DEBTS.find((d) => d.id === 'debt-medical'))));
+        }
+        saveDebts();
+      }
+      if (fromVersion < 13) {
+        const incomeRaw = localStorage.getItem(STORAGE_INCOME);
+        if (incomeRaw) {
+          try {
+            const parsed = JSON.parse(incomeRaw);
+            if (Number(parsed.biweeklyPay) === 3851.65) {
+              parsed.biweeklyPay = 3651.65;
+              localStorage.setItem(STORAGE_INCOME, JSON.stringify(parsed));
+            }
+          } catch { /* keep existing */ }
+        }
+      }
+      if (fromVersion < 14) {
+        if (incomeSettings.monthlyLivingExpenses == null) {
+          incomeSettings.monthlyLivingExpenses = DEFAULT_INCOME.monthlyLivingExpenses;
+          saveIncome();
+        }
+      }
     }
 
     /* ============================================================
@@ -760,9 +1144,153 @@
     let examAttempts = [];
     let chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME });
     let selectedExamYear = new Date().getFullYear();
+    let debts = [];
+    let incomeSettings = { ...DEFAULT_INCOME };
+    let hsaSettings = normalizeHsaSettings({ ...DEFAULT_HSA });
+    let categoryFilter = 'all';
     let chartDashboard = null;
     let chartCalendar = null;
+    let chartDebtStack = null;
     let dashboardCertsPage = 0;
+
+
+    /* ============================================================
+       DEBTS, INCOME & CATEGORY FILTER
+       ============================================================ */
+    const FILTER_LABELS = {
+      all: 'All categories',
+      education: 'Education clawback',
+      credit: 'Credit cards',
+      health: 'Health / medical',
+    };
+
+    function matchesCategoryFilter(category, filter = categoryFilter) {
+      if (filter === 'all') return true;
+      const c = (category || '').toLowerCase();
+      if (filter === 'education') return c === 'education';
+      if (filter === 'credit') return c === 'credit';
+      if (filter === 'health') return c === 'health';
+      return true;
+    }
+
+    function effectiveApr(debt, asOfDate = new Date()) {
+      const apr = Number(debt.apr) || 0;
+      if (debt.promoEndDate) {
+        const promoEnd = parseDate(debt.promoEndDate);
+        const asOf = typeof asOfDate === 'string' ? parseDate(asOfDate) : asOfDate;
+        if (asOf <= promoEnd) return 0;
+      }
+      return apr;
+    }
+
+    function monthlyInterestOnDebt(debt, asOfDate = new Date()) {
+      const bal = Number(debt.balance) || 0;
+      if (bal <= 0) return 0;
+      return bal * (effectiveApr(debt, asOfDate) / 100 / 12);
+    }
+
+    function estimatedMinPayment(debt) {
+      if (debt.minPayment != null && debt.minPayment !== '') return Number(debt.minPayment) || 0;
+      const bal = Number(debt.balance) || 0;
+      if (debt.category === 'Credit') return Math.max(25, bal * 0.02);
+      return Math.min(bal, bal * 0.05) || 0;
+    }
+
+    function debtsForFilter(filter = categoryFilter) {
+      return debts.filter((d) => matchesCategoryFilter(d.category, filter));
+    }
+
+    function educationOwedAt(asOfDate, filter = categoryFilter) {
+      if (filter !== 'all' && filter !== 'education') return 0;
+      return totalRepaymentAt(asOfDate);
+    }
+
+    function balanceDebtsOwedAt(asOfDate, filter = categoryFilter) {
+      return debtsForFilter(filter).reduce((s, d) => s + (Number(d.balance) || 0), 0);
+    }
+
+    function requiredReserveAt(asOfDate, filter = categoryFilter) {
+      if (filter === 'education') return educationOwedAt(asOfDate, filter);
+      if (filter === 'credit' || filter === 'health') return balanceDebtsOwedAt(asOfDate, filter);
+      return educationOwedAt(asOfDate, filter) + balanceDebtsOwedAt(asOfDate, 'all');
+    }
+
+    function totalDebtAmount(filter = categoryFilter) {
+      let sum = balanceDebtsOwedAt(new Date(), filter);
+      if (filter === 'all' || filter === 'education') sum += educationOwedAt(new Date(), 'education');
+      return sum;
+    }
+
+    function monthlyIncomeGross() {
+      const bi = Number(incomeSettings.biweeklyPay) || 0;
+      const add = Number(incomeSettings.additionalMonthly) || 0;
+      return bi * PAYCHECKS_PER_MONTH_AVG + add;
+    }
+
+    function monthlyLivingExpensesAmount() {
+      return Math.max(0, Number(incomeSettings.monthlyLivingExpenses) || 0);
+    }
+
+    function monthlyDebtServiceAmount(filter = categoryFilter) {
+      const chime = (filter === 'all') ? getMonthlyDeposit(chimeSettings) : 0;
+      const mins = debtsForFilter(filter).reduce((s, d) => s + estimatedMinPayment(d), 0);
+      const extra = (filter === 'all') ? (Number(incomeSettings.extraDebtPayment) || 0) : 0;
+      return mins + chime + extra;
+    }
+
+    function getDepositOverride() {
+      const slider = document.getElementById('whatif-chime-slider');
+      if (slider) return parseFloat(slider.value);
+      const cal = document.getElementById('calendar-deposit-override');
+      if (cal && cal.dataset.touched) return parseFloat(cal.value);
+      return null;
+    }
+
+    function expenseToDebtRow(e) {
+      const today = new Date();
+      const isUpcoming = e.upcoming && !isExpenseIncurred(e, today);
+      const incurred = parseDate(e.incurredDate);
+      const d12 = formatDate(addMonths(incurred, 12));
+      const d18 = formatDate(addMonths(incurred, 18));
+      const pct = isUpcoming ? '—' : `${obligationPercent(e.incurredDate, today)}%`;
+      const owed = amountOwed(e, today);
+      return {
+        kind: 'education',
+        id: e.id,
+        name: e.name,
+        category: 'Education',
+        balance: owed,
+        displayBalance: e.cost,
+        apr: '—',
+        promoEnd: '—',
+        moInterest: 0,
+        timeObligation: isUpcoming ? 'Upcoming' : `${pct} · 12mo ${d12} · 18mo ${d18}`,
+        isUpcoming,
+      };
+    }
+
+    function saveDebts() {
+      localStorage.setItem(STORAGE_DEBTS, JSON.stringify(debts));
+    }
+
+    function saveIncome() {
+      localStorage.setItem(STORAGE_INCOME, JSON.stringify(incomeSettings));
+    }
+
+    function saveHsa() {
+      hsaSettings = normalizeHsaSettings(hsaSettings);
+      localStorage.setItem(STORAGE_HSA, JSON.stringify(hsaSettings));
+    }
+
+    function setCategoryFilter(filter) {
+      categoryFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+      const sub = document.getElementById('filter-subtitle');
+      if (sub) sub.textContent = FILTER_LABELS[filter] || filter;
+      refreshAll();
+    }
 
     /* ============================================================
        CLAWBACK & DATE HELPERS
@@ -1020,6 +1548,53 @@
      * Current balance = as of today (deposits through today are already included).
      * Only paychecks after today are added forward; then monthly interest (APY/12).
      */
+
+    /** Simulated debt balances at month-end (credit/health amortization + education clawback). */
+    let _debtSimState = null;
+
+    function initDebtSimulation(monthCount) {
+      _debtSimState = debts.map((d) => ({
+        id: d.id,
+        category: d.category,
+        balance: Number(d.balance) || 0,
+        apr: Number(d.apr) || 0,
+        promoEndDate: d.promoEndDate || '',
+        minPayment: estimatedMinPayment(d),
+      }));
+    }
+
+    function advanceDebtSimulation(monthEnd) {
+      if (!_debtSimState) return;
+      const extra = Number(incomeSettings.extraDebtPayment) || 0;
+      const owing = _debtSimState.filter((d) => d.balance > 0);
+      const extraPerDebt = extra / Math.max(1, owing.length);
+      _debtSimState.forEach((d) => {
+        if (d.balance <= 0) return;
+        const rate = effectiveApr(d, monthEnd) / 100 / 12;
+        d.balance += d.balance * rate;
+        const pay = d.minPayment + extraPerDebt;
+        d.balance = Math.max(0, d.balance - pay);
+      });
+    }
+
+    /** Sum simulated card/health balances from _debtSimState for the active filter. */
+    function simulatedBalanceDebt(filter = categoryFilter) {
+      const state = _debtSimState || [];
+      if (filter === 'credit') return state.filter((d) => d.category === 'Credit').reduce((s, d) => s + d.balance, 0);
+      if (filter === 'health') return state.filter((d) => d.category === 'Health').reduce((s, d) => s + d.balance, 0);
+      if (filter === 'education') return 0;
+      return state.reduce((s, d) => s + d.balance, 0);
+    }
+
+    /** Total debt at month-end: education clawback + amortized credit/health balances. */
+    function totalDebtAtMonth(monthEnd, filter = categoryFilter) {
+      const edu = educationOwedAt(monthEnd, 'education');
+      if (filter === 'education') return edu;
+      const cardHealth = simulatedBalanceDebt(filter);
+      if (filter === 'credit' || filter === 'health') return cardHealth;
+      return cardHealth + edu;
+    }
+
     function projectChime(settings, months, depositOverride = null) {
       const s = normalizeChimeSettings(settings);
       const paycheck = paycheckAmountForProjection(s, depositOverride);
@@ -1032,8 +1607,17 @@
       let dateIdx = 0;
       const rows = [];
 
-      monthStarts.forEach((monthStart) => {
+      initDebtSimulation(months);
+
+      const hsa = normalizeHsaSettings(hsaSettings);
+      const hsaPaycheck = hsa.perPaycheck;
+      const hsaAllDates = getPaycheckDepositDates(hsa, horizon);
+      let hsaBalance = Number(hsa.balance) || 0;
+      let hsaDateIdx = 0;
+
+      monthStarts.forEach((monthStart, monthIndex) => {
         const monthEnd = endOfMonth(monthStart);
+        const totalDebt = totalDebtAtMonth(monthEnd);
         let dep = 0;
         while (dateIdx < allDates.length && allDates[dateIdx] <= monthEnd) {
           const d = allDates[dateIdx];
@@ -1045,16 +1629,41 @@
         }
         const interest = balance * monthlyRate;
         balance += interest;
-        const required = totalRepaymentAt(monthEnd);
+
+        let hsaDep = 0;
+        while (hsaDateIdx < hsaAllDates.length && hsaAllDates[hsaDateIdx] <= monthEnd) {
+          const d = hsaAllDates[hsaDateIdx];
+          if (d > today) {
+            hsaBalance += hsaPaycheck;
+            hsaDep += hsaPaycheck;
+          }
+          hsaDateIdx += 1;
+        }
+        let quarterlyBonus = 0;
+        if (isQuarterEndMonth(monthStart) && monthEnd > today) {
+          quarterlyBonus = hsa.quarterlyBonus;
+          hsaBalance += quarterlyBonus;
+        }
+
+        const required = requiredReserveAt(monthEnd, categoryFilter);
+        const healthDebt = balanceDebtsOwedAt(monthEnd, 'health');
+        const surplusBase = categoryFilter === 'health' ? hsaBalance - healthDebt : balance - required;
         rows.push({
           monthStart,
           label: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           chimeBalance: balance,
+          hsaBalance,
           required,
-          surplus: balance - required,
+          totalDebt,
+          healthDebt,
+          surplus: surplusBase,
           deposit: dep,
+          hsaDeposit: hsaDep,
+          quarterlyBonus,
           interest,
         });
+
+        advanceDebtSimulation(monthEnd);
       });
       return rows;
     }
@@ -1063,7 +1672,7 @@
     function monthsUntilDerisked(maxMonths = 120) {
       const monthStarts = getMonthStarts(maxMonths);
       for (let i = 0; i < monthStarts.length; i++) {
-        if (totalRepaymentAt(endOfMonth(monthStarts[i])) <= 0.005) return i;
+        if (requiredReserveAt(endOfMonth(monthStarts[i]), 'education') <= 0.005) return i;
       }
       return null;
     }
@@ -1090,6 +1699,14 @@
         }
         if (attRaw) {
           try { examAttempts = JSON.parse(attRaw); } catch { examAttempts = []; }
+        }
+        const debtsRawMigrate = localStorage.getItem(STORAGE_DEBTS);
+        if (debtsRawMigrate) {
+          try { debts = JSON.parse(debtsRawMigrate); } catch { debts = []; }
+        }
+        const incomeRawMigrate = localStorage.getItem(STORAGE_INCOME);
+        if (incomeRawMigrate) {
+          try { incomeSettings = { ...DEFAULT_INCOME, ...JSON.parse(incomeRawMigrate) }; } catch { /* keep default */ }
         }
         migrateData(storedVersion);
         localStorage.setItem(STORAGE_DATA_VERSION, String(DATA_VERSION));
@@ -1123,6 +1740,30 @@
         saveChime();
       }
 
+      const debtsRaw = localStorage.getItem(STORAGE_DEBTS);
+      if (debtsRaw) {
+        try { debts = JSON.parse(debtsRaw); } catch { debts = []; }
+      } else if (!isBrandNew) {
+        debts = JSON.parse(JSON.stringify(DEFAULT_DEBTS));
+        saveDebts();
+      }
+
+      const incomeRaw = localStorage.getItem(STORAGE_INCOME);
+      if (incomeRaw) {
+        try { incomeSettings = { ...DEFAULT_INCOME, ...JSON.parse(incomeRaw) }; } catch { incomeSettings = { ...DEFAULT_INCOME }; }
+      } else if (!isBrandNew) {
+        incomeSettings = { ...DEFAULT_INCOME };
+        saveIncome();
+      }
+
+      const hsaRaw = localStorage.getItem(STORAGE_HSA);
+      if (hsaRaw) {
+        try { hsaSettings = normalizeHsaSettings(JSON.parse(hsaRaw)); } catch { hsaSettings = normalizeHsaSettings({ ...DEFAULT_HSA }); }
+      } else if (!isBrandNew) {
+        hsaSettings = normalizeHsaSettings({ ...DEFAULT_HSA });
+        saveHsa();
+      }
+
       const theme = localStorage.getItem(STORAGE_THEME);
       if (theme === 'dark') document.documentElement.classList.add('dark');
       populateYearFilter();
@@ -1143,6 +1784,195 @@
 
     function saveExamAttempts() {
       localStorage.setItem(STORAGE_EXAM_ATTEMPTS, JSON.stringify(examAttempts));
+    }
+
+
+    function renderDebtsTable() {
+      const tbody = document.getElementById('debts-tbody');
+      if (!tbody) return;
+      const rows = [];
+      if (categoryFilter === 'all' || categoryFilter === 'education') {
+        expenses.forEach((e) => rows.push(expenseToDebtRow(e)));
+      }
+      debtsForFilter().forEach((d) => {
+        rows.push({
+          kind: 'debt',
+          id: d.id,
+          name: d.name,
+          category: d.category,
+          balance: Number(d.balance) || 0,
+          displayBalance: Number(d.balance) || 0,
+          apr: effectiveApr(d) + '%',
+          promoEnd: d.promoEndDate || '—',
+          moInterest: monthlyInterestOnDebt(d),
+          timeObligation: '—',
+          isUpcoming: false,
+        });
+      });
+      const filtered = rows.filter((r) => matchesCategoryFilter(r.category, categoryFilter));
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-500">No debts in this view. Add one or switch filters.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map((r) => {
+        const balClass = r.balance > 0 ? 'font-medium' : 'text-surplus';
+        const editBtn = r.kind === 'education'
+          ? `<button data-edit-expense="${r.id}" class="text-chime hover:underline text-xs mr-2">Edit</button>`
+          : `<button data-edit-debt="${r.id}" class="text-chime hover:underline text-xs mr-2">Edit</button>`;
+        const delBtn = r.kind === 'education'
+          ? `<button data-delete-expense="${r.id}" class="text-shortfall hover:underline text-xs">Delete</button>`
+          : `<button data-delete-debt="${r.id}" class="text-shortfall hover:underline text-xs">Delete</button>`;
+        return `<tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/30${r.isUpcoming ? ' bg-amber-50/40 dark:bg-amber-950/20' : ''}">
+          <td class="px-4 py-3 font-medium">${escapeHtml(r.name)}</td>
+          <td class="px-4 py-3"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-700">${escapeHtml(r.category)}</span></td>
+          <td class="px-4 py-3 ${balClass}">${formatMoney(r.kind === 'education' ? r.balance : r.displayBalance)}</td>
+          <td class="px-4 py-3 hidden md:table-cell">${r.apr}</td>
+          <td class="px-4 py-3 hidden lg:table-cell text-slate-500">${r.promoEnd}</td>
+          <td class="px-4 py-3 hidden sm:table-cell">${r.moInterest ? formatMoney(r.moInterest) : '—'}</td>
+          <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-500">${escapeHtml(r.timeObligation)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${editBtn}${delBtn}</td>
+        </tr>`;
+      }).join('');
+      tbody.querySelectorAll('[data-edit-expense]').forEach((b) => b.addEventListener('click', () => openExpenseModal(b.dataset.editExpense)));
+      tbody.querySelectorAll('[data-delete-expense]').forEach((b) => b.addEventListener('click', () => deleteExpense(b.dataset.deleteExpense)));
+      tbody.querySelectorAll('[data-edit-debt]').forEach((b) => b.addEventListener('click', () => openDebtModal(b.dataset.editDebt)));
+      tbody.querySelectorAll('[data-delete-debt]').forEach((b) => b.addEventListener('click', () => deleteDebt(b.dataset.deleteDebt)));
+    }
+
+    function bindIncomeInputs() {
+      const bi = document.getElementById('income-biweekly');
+      const add = document.getElementById('income-additional');
+      const living = document.getElementById('income-living-expenses');
+      const extra = document.getElementById('income-extra-debt');
+      if (bi && bi !== document.activeElement) bi.value = incomeSettings.biweeklyPay;
+      if (add && add !== document.activeElement) add.value = incomeSettings.additionalMonthly;
+      if (living && living !== document.activeElement) living.value = incomeSettings.monthlyLivingExpenses;
+      if (extra && extra !== document.activeElement) extra.value = incomeSettings.extraDebtPayment;
+      const fromPay = (Number(incomeSettings.biweeklyPay) || 0) * PAYCHECKS_PER_MONTH_AVG;
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('income-paychecks-avg', PAYCHECKS_PER_MONTH_AVG.toFixed(2));
+      set('income-from-pay', formatMoney(fromPay));
+      set('income-gross-display', formatMoney(monthlyIncomeGross()));
+    }
+
+    function readIncomeFromInputs() {
+      const bi = document.getElementById('income-biweekly');
+      const add = document.getElementById('income-additional');
+      const living = document.getElementById('income-living-expenses');
+      const extra = document.getElementById('income-extra-debt');
+      if (bi) incomeSettings.biweeklyPay = parseFloat(bi.value) || 0;
+      if (add) incomeSettings.additionalMonthly = parseFloat(add.value) || 0;
+      if (living) incomeSettings.monthlyLivingExpenses = parseFloat(living.value) || 0;
+      if (extra) incomeSettings.extraDebtPayment = parseFloat(extra.value) || 0;
+      saveIncome();
+    }
+
+    function updateWhatIfLabels() {
+      const dep = getMonthlyDeposit(chimeSettings);
+      const override = getDepositOverride();
+      const val = override != null ? override : dep;
+      const label = document.getElementById('whatif-chime-label');
+      const saved = document.getElementById('whatif-chime-saved');
+      const slider = document.getElementById('whatif-chime-slider');
+      if (label) label.textContent = formatMoney(val);
+      if (saved) saved.textContent = formatMoney(dep);
+      if (slider && !slider.dataset.touched) slider.value = dep;
+    }
+
+    function hsaFieldIds() {
+      return {
+        balance: ['hsa-balance', 'hsa-page-balance'],
+        perPaycheck: ['hsa-per-paycheck', 'hsa-page-per-paycheck'],
+        paychecksPerMonth: ['hsa-paychecks-per-month', 'hsa-page-paychecks-per-month'],
+        quarterlyBonus: ['hsa-quarterly-bonus', 'hsa-page-quarterly-bonus'],
+        depositsStartedDate: ['hsa-deposits-started', 'hsa-page-deposits-started'],
+      };
+    }
+
+    function setHsaFieldValues(ids, value) {
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && el !== document.activeElement) el.value = value;
+      });
+    }
+
+    function readHsaField(ids) {
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && document.activeElement === el) return el.value;
+      }
+      const el = document.getElementById(ids[0]);
+      return el ? el.value : null;
+    }
+
+    function bindHsaInputs() {
+      hsaSettings = normalizeHsaSettings(hsaSettings);
+      const f = hsaFieldIds();
+      setHsaFieldValues(f.balance, hsaSettings.balance);
+      setHsaFieldValues(f.perPaycheck, hsaSettings.perPaycheck);
+      setHsaFieldValues(f.paychecksPerMonth, hsaSettings.paychecksPerMonth);
+      setHsaFieldValues(f.quarterlyBonus, hsaSettings.quarterlyBonus);
+      setHsaFieldValues(f.depositsStartedDate, hsaSettings.depositsStartedDate || defaultDepositsStartedDate());
+      const summaryText = formatHsaSummary(hsaSettings);
+      document.querySelectorAll('#hsa-monthly-summary, #hsa-page-monthly-summary').forEach((el) => { el.textContent = summaryText; });
+      const monthlyPay = document.getElementById('hsa-page-monthly-pay');
+      if (monthlyPay) monthlyPay.textContent = formatMoney(hsaSettings.monthlyFromPaychecks);
+      const qDisplay = document.getElementById('hsa-page-quarterly-display');
+      if (qDisplay) qDisplay.textContent = formatMoney(hsaSettings.quarterlyBonus);
+      const annual = document.getElementById('hsa-page-annual-est');
+      if (annual) annual.textContent = formatMoney(hsaSettings.monthlyFromPaychecks * 12 + hsaSettings.quarterlyBonus * 4);
+    }
+
+    function readHsaFromInputs() {
+      const f = hsaFieldIds();
+      const bal = readHsaField(f.balance);
+      const per = readHsaField(f.perPaycheck);
+      const ppm = readHsaField(f.paychecksPerMonth);
+      const bonus = readHsaField(f.quarterlyBonus);
+      const started = readHsaField(f.depositsStartedDate);
+      if (bal != null) hsaSettings.balance = parseFloat(bal) || 0;
+      if (per != null) hsaSettings.perPaycheck = parseFloat(per) || 0;
+      if (ppm != null) hsaSettings.paychecksPerMonth = parseInt(ppm, 10) || 0;
+      if (bonus != null) hsaSettings.quarterlyBonus = parseFloat(bonus) || 0;
+      if (started != null) hsaSettings.depositsStartedDate = started;
+      hsaSettings = normalizeHsaSettings(hsaSettings);
+      saveHsa();
+    }
+
+    function openDebtModal(id = null) {
+      document.getElementById('debt-form').reset();
+      document.getElementById('debt-modal-title').textContent = id ? 'Edit debt' : 'Add debt';
+      if (id) {
+        const d = debts.find((x) => x.id === id);
+        if (!d) return;
+        document.getElementById('debt-id').value = d.id;
+        document.getElementById('debt-category').value = d.category;
+        document.getElementById('debt-name').value = d.name;
+        document.getElementById('debt-balance').value = d.balance;
+        document.getElementById('debt-apr').value = d.apr ?? '';
+        document.getElementById('debt-promo-end').value = d.promoEndDate || '';
+        document.getElementById('debt-min-payment').value = d.minPayment ?? '';
+        document.getElementById('debt-notes').value = d.notes || '';
+      } else {
+        document.getElementById('debt-id').value = '';
+        document.getElementById('debt-category').value = 'Credit';
+      }
+      const o = document.getElementById('debt-modal-overlay');
+      o.classList.remove('hidden');
+      o.classList.add('flex');
+    }
+
+    function closeDebtModal() {
+      const o = document.getElementById('debt-modal-overlay');
+      o.classList.add('hidden');
+      o.classList.remove('flex');
+    }
+
+    function deleteDebt(id) {
+      if (!confirm('Delete this debt?')) return;
+      debts = debts.filter((d) => d.id !== id);
+      saveDebts();
+      refreshAll();
     }
 
     /* ============================================================
@@ -1490,23 +2320,178 @@
     }
 
     /* ============================================================
+       UI: CASHFLOW PAGE
+       ============================================================ */
+    function cfListRow(label, amount, note = '') {
+      const noteHtml = note ? `<span class="block text-xs text-slate-500">${escapeHtml(note)}</span>` : '';
+      return `<li class="flex justify-between gap-4 border-b border-slate-100 py-2 last:border-0 dark:border-slate-700">
+        <span class="text-slate-600 dark:text-slate-400">${escapeHtml(label)}${noteHtml}</span>
+        <span class="shrink-0 font-semibold tabular-nums">${formatMoney(amount)}</span>
+      </li>`;
+    }
+
+    function cashflowOutflowItems(filter = categoryFilter) {
+      const items = [];
+      if (filter === 'all' || filter === 'education') {
+        items.push({
+          label: 'Chime (education repayment fund)',
+          amount: getMonthlyDeposit(chimeSettings),
+          note: formatPaycheckSummary(chimeSettings),
+        });
+      }
+      if (filter === 'all' || filter === 'health') {
+        const s = normalizeHsaSettings(hsaSettings);
+        const avgBonus = (s.quarterlyBonus * 4) / 12;
+        items.push({
+          label: 'HSA contributions',
+          amount: monthlyHsaContribution(),
+          note: avgBonus > 0
+            ? `${formatMoney(s.monthlyFromPaychecks)}/mo from paychecks + ${formatMoney(avgBonus)}/mo avg quarter bonus`
+            : formatHsaSummary(hsaSettings),
+        });
+      }
+      debtsForFilter(filter).forEach((d) => {
+        const min = estimatedMinPayment(d);
+        if (min > 0) {
+          items.push({
+            label: `${d.name} (minimum)`,
+            amount: min,
+            note: d.category || '',
+          });
+        }
+      });
+      if (filter === 'all') {
+        const living = monthlyLivingExpensesAmount();
+        if (living > 0) {
+          items.push({
+            label: 'Living & other expenses',
+            amount: living,
+            note: 'Rent, food, utilities, etc.',
+          });
+        }
+        const extra = Number(incomeSettings.extraDebtPayment) || 0;
+        if (extra > 0) items.push({ label: 'Extra debt payment', amount: extra });
+      }
+      return items;
+    }
+
+    function renderCashflowPage() {
+      const incomeEl = document.getElementById('cf-income-list');
+      if (!incomeEl) return;
+
+      const bi = Number(incomeSettings.biweeklyPay) || 0;
+      const add = Number(incomeSettings.additionalMonthly) || 0;
+      const fromPay = bi * PAYCHECKS_PER_MONTH_AVG;
+      const totalIn = monthlyIncomeGross();
+      const outflows = cashflowOutflowItems();
+      const totalOut = outflows.reduce((s, i) => s + i.amount, 0);
+      const surplus = totalIn - totalOut;
+
+      incomeEl.innerHTML = [
+        cfListRow(
+          'IT paycheck (bi-weekly × avg/mo)',
+          fromPay,
+          `${formatMoney(bi)} × ${PAYCHECKS_PER_MONTH_AVG.toFixed(2)} paychecks/mo`,
+        ),
+        cfListRow('Additional monthly income', add),
+        `<li class="flex justify-between gap-4 border-t border-slate-200 pt-2 font-semibold dark:border-slate-600">
+          <span>Total in</span><span class="tabular-nums text-surplus">${formatMoney(totalIn)}</span>
+        </li>`,
+      ].join('');
+
+      const outEl = document.getElementById('cf-outflow-list');
+      if (outEl) {
+        outEl.innerHTML = outflows.length
+          ? outflows.map((i) => cfListRow(i.label, i.amount, i.note || '')).join('')
+            + `<li class="flex justify-between gap-4 border-t border-slate-200 pt-2 font-semibold dark:border-slate-600">
+                <span>Total out</span><span class="tabular-nums">${formatMoney(totalOut)}</span>
+              </li>`
+          : '<li class="py-4 text-center text-slate-500">No committed outflows for this filter.</li>';
+      }
+
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      set('cf-total-in', formatMoney(totalIn));
+      set('cf-total-out', formatMoney(totalOut));
+      const surEl = document.getElementById('cf-surplus');
+      if (surEl) {
+        surEl.textContent = formatMoney(surplus);
+        surEl.className = 'mt-2 text-2xl font-bold ' + (surplus >= 0 ? 'text-surplus' : 'text-shortfall');
+      }
+      const surNote = document.getElementById('cf-surplus-note');
+      if (surNote) {
+        surNote.textContent = categoryFilter === 'all'
+          ? 'Main-account cushion after living costs, transfers & min payments'
+          : `Full income minus ${FILTER_LABELS[categoryFilter] || categoryFilter} outflows only`;
+      }
+      const filterNote = document.getElementById('cf-filter-note');
+      if (filterNote) {
+        filterNote.textContent = categoryFilter === 'all'
+          ? 'Shows all recurring transfers and minimum debt payments. Education clawback is tracked in Chime, not as a separate line here.'
+          : `Filtered to ${FILTER_LABELS[categoryFilter] || categoryFilter}. Use All for full household cashflow.`;
+      }
+
+      const waterfall = document.getElementById('cf-waterfall');
+      if (waterfall) {
+        const base = totalIn > 0 ? totalIn : 1;
+        const colors = ['bg-rose-400', 'bg-amber-400', 'bg-orange-400', 'bg-violet-400', 'bg-pink-400', 'bg-fuchsia-400'];
+        let barHtml = '<div class="flex h-10 w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900" role="img" aria-label="Monthly cashflow waterfall">';
+        outflows.forEach((item, idx) => {
+          const pct = Math.min(100, (item.amount / base) * 100);
+          if (pct < 0.5) return;
+          barHtml += `<div class="${colors[idx % colors.length]} h-full" style="width:${pct.toFixed(1)}%" title="${escapeHtml(item.label)}: ${formatMoney(item.amount)}"></div>`;
+        });
+        const surPct = Math.max(0, (surplus / base) * 100);
+        if (surPct >= 0.5) {
+          barHtml += `<div class="${surplus >= 0 ? 'bg-emerald-500' : 'bg-red-600'} h-full" style="width:${surPct.toFixed(1)}%" title="Surplus: ${formatMoney(surplus)}"></div>`;
+        }
+        barHtml += '</div>';
+        const legend = [
+          { label: 'Income', amount: totalIn, swatch: 'bg-emerald-500' },
+          ...outflows.map((i, idx) => ({ label: i.label, amount: i.amount, swatch: colors[idx % colors.length] })),
+          { label: 'Surplus', amount: surplus, swatch: surplus >= 0 ? 'bg-emerald-600' : 'bg-red-600' },
+        ];
+        barHtml += '<ul class="mt-3 space-y-1.5 text-xs">';
+        legend.forEach((row) => {
+          const pct = base > 0 ? ((row.amount / base) * 100).toFixed(0) : '0';
+          barHtml += `<li class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 shrink-0 rounded ${row.swatch}"></span>
+            <span class="flex-1 text-slate-600 dark:text-slate-400">${escapeHtml(row.label)}</span>
+            <span class="tabular-nums font-medium">${formatMoney(row.amount)}</span>
+            <span class="w-10 text-right text-slate-400">${pct}%</span>
+          </li>`;
+        });
+        barHtml += '</ul>';
+        waterfall.innerHTML = barHtml;
+      }
+    }
+
+    /* ============================================================
        UI: DASHBOARD STATS & CHIME PAGE
        ============================================================ */
     function renderStats() {
-      const incurredOnly = expenses.filter((e) => !e.upcoming || isExpenseIncurred(e, new Date()));
-      const totalCost = incurredOnly.reduce((s, e) => s + Number(e.cost), 0);
       const upcomingTotal = totalUpcomingCost();
       const upcomingCount = upcomingExpenses().length;
-      const owedToday = totalRepaymentAt(new Date());
-      const rows = projectChime(chimeSettings, 1);
+      const owedToday = requiredReserveAt(new Date());
+      const depositOverride = getDepositOverride();
+      const rows = projectChime(chimeSettings, 1, depositOverride);
       const chimeEnd = rows[0]?.chimeBalance ?? chimeSettings.balance;
       const derisk = monthsUntilDerisked();
+      const surplus = chimeEnd - owedToday;
 
-      document.getElementById('stat-total-expenses').textContent = formatMoney(totalCost);
-      document.getElementById('stat-expense-count').textContent = `${incurredOnly.length} incurred · ${expenses.length} total`;
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      set('stat-total-debt', formatMoney(totalDebtAmount()));
+      set('stat-monthly-income', formatMoney(monthlyIncomeGross()));
+      set('stat-debt-service', formatMoney(monthlyDebtServiceAmount()));
+      set('stat-chime-balance', formatMoney(chimeEnd));
+      set('stat-repayment-today', formatMoney(owedToday));
+      const surEl = document.getElementById('stat-surplus-month');
+      if (surEl) {
+        surEl.textContent = formatMoney(surplus);
+        surEl.className = 'mt-2 text-2xl font-bold ' + (surplus >= 0 ? 'text-surplus' : 'text-shortfall');
+      }
       const upcomingEl = document.getElementById('stat-upcoming-expenses');
       if (upcomingEl) {
-        if (upcomingCount > 0) {
+        if (upcomingCount > 0 && (categoryFilter === 'all' || categoryFilter === 'education')) {
           upcomingEl.textContent = `${formatMoney(upcomingTotal)} upcoming (${upcomingCount} planned exam${upcomingCount !== 1 ? 's' : ''})`;
           upcomingEl.classList.remove('hidden');
         } else {
@@ -1514,12 +2499,48 @@
           upcomingEl.classList.add('hidden');
         }
       }
-      document.getElementById('stat-repayment-today').textContent = formatMoney(owedToday);
-      document.getElementById('stat-chime-balance').textContent = formatMoney(chimeEnd);
-      document.getElementById('stat-months-derisked').textContent =
-        derisk === null ? '48+' : derisk === 0 ? '0' : String(derisk);
+      const deriskWrap = document.getElementById('stat-months-derisked-wrap');
+      const deriskEl = document.getElementById('stat-months-derisked');
+      if (deriskWrap && deriskEl && (categoryFilter === 'all' || categoryFilter === 'education')) {
+        deriskEl.textContent = derisk === null ? '48+' : derisk === 0 ? '0' : String(derisk);
+        deriskWrap.classList.remove('hidden');
+      } else if (deriskWrap) deriskWrap.classList.add('hidden');
 
-      const surplus = chimeEnd - owedToday;
+      bindIncomeInputs();
+      bindHsaInputs();
+      renderDebtsTable();
+      updateWhatIfLabels();
+      const certsPanel = document.getElementById('dashboard-certs-panel');
+      if (certsPanel) certsPanel.classList.toggle('hidden', categoryFilter !== 'all' && categoryFilter !== 'education');
+
+      const hsaEnd = rows[0]?.hsaBalance ?? hsaSettings.balance;
+      const hsaProj = document.getElementById('hsa-proj-month');
+      if (hsaProj) {
+        hsaProj.innerHTML = `<span class="text-slate-500">Projected balance (month-end):</span> <strong class="text-emerald-600 dark:text-emerald-400">${formatMoney(hsaEnd)}</strong>`;
+      }
+      const hsaPageProj = document.getElementById('hsa-page-proj-month');
+      if (hsaPageProj) hsaPageProj.textContent = formatMoney(hsaEnd);
+
+      const chimeCardLabel = document.querySelector('#stat-chime-balance')?.previousElementSibling;
+      const surplusLabel = document.querySelector('#stat-surplus-month')?.previousElementSibling;
+      const reserveLabel = document.querySelector('#stat-repayment-today')?.previousElementSibling;
+      if (categoryFilter === 'health') {
+        if (chimeCardLabel) chimeCardLabel.textContent = 'HSA (end of month)';
+        set('stat-chime-balance', formatMoney(hsaEnd));
+        if (surplusLabel) surplusLabel.textContent = 'HSA vs medical debt';
+        if (reserveLabel) reserveLabel.textContent = 'Medical balances';
+        const healthBal = balanceDebtsOwedAt(new Date(), 'health');
+        set('stat-repayment-today', formatMoney(healthBal));
+        if (surEl) {
+          surEl.textContent = formatMoney(hsaEnd - healthBal);
+          surEl.className = 'mt-2 text-2xl font-bold ' + (hsaEnd - healthBal >= 0 ? 'text-surplus' : 'text-shortfall');
+        }
+      } else {
+        if (chimeCardLabel) chimeCardLabel.textContent = 'Chime (end of month)';
+        if (surplusLabel) surplusLabel.textContent = 'Surplus / shortfall';
+        if (reserveLabel) reserveLabel.textContent = 'If triggered today';
+      }
+
       const surplusEl = document.getElementById('chime-surplus-today');
       if (surplusEl) {
         surplusEl.textContent = formatMoney(surplus);
@@ -1640,24 +2661,113 @@
       };
     }
 
+    function buildMultiChartConfig(labels, datasets) {
+      const c = chartColors();
+      return {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { labels: { color: c.text } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}` } },
+          },
+          scales: {
+            x: { ticks: { color: c.text, maxTicksLimit: 12 }, grid: { color: c.grid } },
+            y: { ticks: { color: c.text, callback: (v) => '$' + v.toLocaleString() }, grid: { color: c.grid } },
+          },
+        },
+      };
+    }
+
     function updateDashboardChart() {
       const months = 36;
-      const rows = projectChime(chimeSettings, months);
+      const depositOverride = getDepositOverride();
+      const rows = projectChime(chimeSettings, months, depositOverride);
       const labels = rows.map((r) => r.label);
       const chimeData = rows.map((r) => r.chimeBalance);
       const requiredData = rows.map((r) => r.required);
+      const debtData = rows.map((r) => r.totalDebt ?? 0);
       const ctx = document.getElementById('chart-dashboard');
       if (chartDashboard) chartDashboard.destroy();
-      chartDashboard = new Chart(ctx, buildChartConfig(labels, chimeData, requiredData));
+      const c = chartColors();
+      const hsaData = rows.map((r) => r.hsaBalance ?? 0);
+      const datasets = [
+        { label: 'Chime balance', data: chimeData, borderColor: c.chime, backgroundColor: 'rgba(14,165,233,0.1)', fill: true, tension: 0.3 },
+        { label: 'Required reserve', data: requiredData, borderColor: c.required, backgroundColor: 'rgba(239,68,68,0.08)', fill: true, tension: 0.3 },
+        { label: 'Total debt', data: debtData, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.06)', fill: false, tension: 0.3 },
+      ];
+      if (categoryFilter === 'all' || categoryFilter === 'health') {
+        datasets.splice(1, 0, { label: 'HSA balance', data: hsaData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 });
+      }
+      chartDashboard = new Chart(ctx, buildMultiChartConfig(labels, datasets));
+
+      updateDebtStackChart(rows);
+    }
+
+    function debtStackSeriesFromRows(rows) {
+      const edu = rows.map((r) => educationOwedAt(endOfMonth(r.monthStart), 'education'));
+      const credit = [];
+      const health = [];
+      initDebtSimulation(rows.length);
+      rows.forEach((r) => {
+        credit.push((_debtSimState || []).filter((d) => d.category === 'Credit').reduce((s, d) => s + d.balance, 0));
+        health.push((_debtSimState || []).filter((d) => d.category === 'Health').reduce((s, d) => s + d.balance, 0));
+        advanceDebtSimulation(endOfMonth(r.monthStart));
+      });
+      return { edu, credit, health };
+    }
+
+    function updateDebtStackChart(rows) {
+      const ctx = document.getElementById('chart-debt-stack');
+      if (!ctx) return;
+      const labels = rows.map((r) => r.label);
+      const { edu, credit, health } = debtStackSeriesFromRows(rows);
+      if (chartDebtStack) chartDebtStack.destroy();
+      const dark = document.documentElement.classList.contains('dark');
+      chartDebtStack = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Education clawback', data: edu, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)', fill: true, tension: 0.3, stack: 'debt' },
+            { label: 'Credit cards', data: credit, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.12)', fill: true, tension: 0.3, stack: 'debt' },
+            { label: 'Health', data: health, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', fill: true, tension: 0.3, stack: 'debt' },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: dark ? '#94a3b8' : '#64748b' } } },
+          scales: {
+            x: { stacked: true, ticks: { maxTicksLimit: 12, color: dark ? '#94a3b8' : '#64748b' } },
+            y: { stacked: true, ticks: { callback: (v) => '$' + Number(v).toLocaleString(), color: dark ? '#94a3b8' : '#64748b' } },
+          },
+        },
+      });
     }
 
     function updateCalendarChart(rows) {
       const labels = rows.map((r) => r.label);
       const chimeData = rows.map((r) => r.chimeBalance);
       const requiredData = rows.map((r) => r.required);
+      const debtData = rows.map((r) => r.totalDebt ?? 0);
+      const showDebt = document.getElementById('chart-show-total-debt')?.checked !== false;
       const ctx = document.getElementById('chart-calendar');
       if (chartCalendar) chartCalendar.destroy();
-      chartCalendar = new Chart(ctx, buildChartConfig(labels, chimeData, requiredData));
+      const c = chartColors();
+      const hsaData = rows.map((r) => r.hsaBalance ?? 0);
+      const datasets = [
+        { label: 'Chime balance', data: chimeData, borderColor: c.chime, backgroundColor: 'rgba(14,165,233,0.1)', fill: true, tension: 0.3 },
+        { label: 'Required reserve', data: requiredData, borderColor: c.required, backgroundColor: 'rgba(239,68,68,0.08)', fill: true, tension: 0.3 },
+      ];
+      if (categoryFilter === 'all' || categoryFilter === 'health') {
+        datasets.splice(1, 0, { label: 'HSA balance', data: hsaData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 });
+      }
+      if (showDebt) datasets.push({ label: 'Total debt', data: debtData, borderColor: '#8b5cf6', fill: false, tension: 0.3 });
+      chartCalendar = new Chart(ctx, buildMultiChartConfig(labels, datasets));
     }
 
     /* ============================================================
@@ -1687,8 +2797,17 @@
                 <p class="font-semibold text-chime">${formatMoney(r.chimeBalance)}</p>
               </div>
               <div>
-                <span class="text-slate-500">Required min.</span>
+                <span class="text-slate-500">HSA</span>
+                <p class="font-semibold text-emerald-600 dark:text-emerald-400">${formatMoney(r.hsaBalance ?? 0)}</p>
+                ${r.quarterlyBonus ? `<p class="text-[10px] text-emerald-600 dark:text-emerald-400">+${formatMoney(r.quarterlyBonus)} quarter bonus</p>` : ''}
+              </div>
+              <div>
+                <span class="text-slate-500">Required reserve</span>
                 <p class="font-medium">${formatMoney(r.required)}</p>
+              </div>
+              <div>
+                <span class="text-slate-500">Total debt</span>
+                <p class="font-medium text-violet-600 dark:text-violet-400">${formatMoney(r.totalDebt ?? 0)}</p>
               </div>
               <div class="${isSurplus ? 'text-surplus' : 'text-shortfall'}">
                 <span class="text-slate-500">${isSurplus ? 'Surplus' : 'Shortfall'}</span>
@@ -1757,10 +2876,11 @@
        NAVIGATION & THEME
        ============================================================ */
     const PAGE_TITLES = {
-      dashboard: 'Dashboard',
+      dashboard: 'Debt & Cashflow Dashboard',
+      cashflow: 'Cashflow',
       certifications: 'Certifications & Exams',
       expenses: 'Expenses',
-      chime: 'Chime Simulator',
+      chime: 'Chime & HSA Simulator',
       calendar: 'Rolling Calendar',
     };
 
@@ -1787,17 +2907,83 @@
     function refreshAll() {
       renderExpensesTable();
       renderCertificationsPage();
+      renderCashflowPage();
       renderStats();
       bindChimeInputs();
       updateDashboardChart();
       renderCalendar();
       populateYearFilter();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     /* ============================================================
        EVENT LISTENERS
        ============================================================ */
     function initEvents() {
+
+      document.querySelectorAll('.filter-tab').forEach((btn) => {
+        btn.addEventListener('click', () => setCategoryFilter(btn.dataset.filter));
+      });
+
+      document.getElementById('btn-add-debt')?.addEventListener('click', () => openDebtModal());
+      document.getElementById('debt-modal-cancel')?.addEventListener('click', closeDebtModal);
+      document.getElementById('debt-modal-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'debt-modal-overlay') closeDebtModal();
+      });
+      document.getElementById('debt-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('debt-id').value;
+        const payload = {
+          id: id || `debt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          category: document.getElementById('debt-category').value,
+          name: document.getElementById('debt-name').value.trim(),
+          balance: parseFloat(document.getElementById('debt-balance').value) || 0,
+          apr: parseFloat(document.getElementById('debt-apr').value) || 0,
+          promoEndDate: document.getElementById('debt-promo-end').value,
+          minPayment: document.getElementById('debt-min-payment').value === '' ? null : parseFloat(document.getElementById('debt-min-payment').value),
+          notes: document.getElementById('debt-notes').value.trim(),
+        };
+        if (id) {
+          const idx = debts.findIndex((x) => x.id === id);
+          if (idx >= 0) debts[idx] = payload;
+        } else debts.push(payload);
+        saveDebts();
+        closeDebtModal();
+        refreshAll();
+      });
+
+      ['income-biweekly', 'income-additional', 'income-living-expenses', 'income-extra-debt'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => { readIncomeFromInputs(); refreshAll(); });
+      });
+
+      [
+        'hsa-balance', 'hsa-per-paycheck', 'hsa-paychecks-per-month', 'hsa-quarterly-bonus', 'hsa-deposits-started',
+        'hsa-page-balance', 'hsa-page-per-paycheck', 'hsa-page-paychecks-per-month', 'hsa-page-quarterly-bonus', 'hsa-page-deposits-started',
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const handler = () => { readHsaFromInputs(); refreshAll(); };
+        el.addEventListener('input', handler);
+        el.addEventListener('change', handler);
+      });
+
+      const whatifSlider = document.getElementById('whatif-chime-slider');
+      if (whatifSlider) {
+        whatifSlider.addEventListener('input', (e) => {
+          e.target.dataset.touched = '1';
+          updateWhatIfLabels();
+          renderStats();
+          updateDashboardChart();
+          renderCalendar();
+        });
+      }
+
+      document.getElementById('chart-show-total-debt')?.addEventListener('change', renderCalendar);
+      document.getElementById('btn-export-header')?.addEventListener('click', () => document.getElementById('btn-export')?.click());
+      document.getElementById('btn-import-header')?.addEventListener('click', () => document.getElementById('btn-import')?.click());
+
       document.querySelectorAll('[data-nav]').forEach((link) => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1852,7 +3038,7 @@
       });
 
       document.getElementById('btn-export').addEventListener('click', () => {
-        const blob = new Blob([JSON.stringify({ expenses, chimeSettings, certifications, examAttempts }, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify({ expenses, chimeSettings, hsaSettings, certifications, examAttempts, debts, incomeSettings }, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `education-repayment-backup-${formatDate(new Date())}.json`;
@@ -1872,13 +3058,19 @@
             else {
               if (data.expenses) expenses = data.expenses;
               if (data.chimeSettings) chimeSettings = normalizeChimeSettings(data.chimeSettings);
+              if (data.hsaSettings) hsaSettings = normalizeHsaSettings(data.hsaSettings);
               if (data.certifications) certifications = data.certifications;
               if (data.examAttempts) examAttempts = data.examAttempts;
+              if (data.debts) debts = data.debts;
+              if (data.incomeSettings) incomeSettings = { ...DEFAULT_INCOME, ...data.incomeSettings };
             }
             saveExpenses();
             saveChime();
+            saveHsa();
             saveCertifications();
             saveExamAttempts();
+            saveDebts();
+            saveIncome();
             refreshAll();
             alert('Import successful.');
           } catch {
@@ -1890,15 +3082,21 @@
       });
 
       document.getElementById('btn-clear-all').addEventListener('click', () => {
-        if (!confirm('Clear ALL data (expenses, certifications, exam attempts) and reset Chime settings? This cannot be undone.')) return;
+        if (!confirm('Clear ALL data and reset settings? This cannot be undone.')) return;
         expenses = [];
         certifications = [];
         examAttempts = [];
+        debts = [];
+        incomeSettings = { ...DEFAULT_INCOME };
+        hsaSettings = normalizeHsaSettings({ ...DEFAULT_HSA });
         chimeSettings = normalizeChimeSettings({ ...DEFAULT_CHIME });
         localStorage.removeItem(STORAGE_DATA_VERSION);
         saveExpenses();
         saveCertifications();
         saveExamAttempts();
+        saveDebts();
+        saveIncome();
+        saveHsa();
         saveChime();
         document.getElementById('calendar-deposit-override').dataset.touched = '';
         refreshAll();
