@@ -451,6 +451,17 @@
                   <span class="text-sm text-slate-600 dark:text-slate-400">Stop deposits after</span>
                   <input type="date" id="chime-stop-date" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900" />
                 </label>
+                <div class="rounded-xl border border-sky-100 bg-sky-50/50 p-4 dark:border-sky-900 dark:bg-sky-950/30">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Referral bonuses</p>
+                      <p class="mt-0.5 text-xs text-slate-500">One-time promo payouts (e.g. Chime $100/$100/$150 referral). Received entries are already in your balance; unreceived entries are added to projections on their scheduled date.</p>
+                    </div>
+                    <button type="button" id="chime-add-referral" class="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-white dark:border-slate-600 dark:hover:bg-slate-800">+ Add</button>
+                  </div>
+                  <div id="chime-referral-list" class="mt-3 space-y-2"></div>
+                  <p id="chime-referral-summary" class="mt-3 text-xs text-slate-500">—</p>
+                </div>
               </div>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -760,11 +771,19 @@
     const STORAGE_INCOME = 'eduRepayment_income';
     const STORAGE_HSA = 'eduRepayment_hsa';
     const STORAGE_DATA_VERSION = 'eduRepayment_dataVersion';
-    const DATA_VERSION = 14;
+    const DATA_VERSION = 15;
     const PAYCHECKS_PER_MONTH_AVG = 2.166;
     const PROJECTION_MONTHS_DEFAULT = 48;
     const MAX_REIMBURSED_ATTEMPTS_PER_YEAR = 2;
     const DASHBOARD_CERTS_PER_PAGE = 6;
+
+    /** Three-payment Chime referral promo (Caleb Hammer): $100 + $100 + $150
+     *  pays out monthly while qualifying $200+ direct deposits are landing. */
+    const DEFAULT_CHIME_REFERRAL_BONUSES = [
+      { id: 'chime-ref-1', amount: 100, scheduledDate: '2026-05-01', received: true,  note: 'Chime referral promo — month 1 of 3 ($200+ DD required)' },
+      { id: 'chime-ref-2', amount: 100, scheduledDate: '2026-06-01', received: false, note: 'Chime referral promo — month 2 of 3' },
+      { id: 'chime-ref-3', amount: 150, scheduledDate: '2026-07-01', received: false, note: 'Chime referral promo — month 3 of 3' },
+    ];
 
     const DEFAULT_CHIME = {
       balance: 400,
@@ -776,6 +795,7 @@
       apy: 3.5,
       stopDepositsEnabled: false,
       stopDepositsDate: '',
+      referralBonuses: JSON.parse(JSON.stringify(DEFAULT_CHIME_REFERRAL_BONUSES)),
     };
 
 
@@ -797,7 +817,7 @@
 
     const DEFAULT_DEBTS = [
       { id: 'debt-amex', category: 'Credit', name: 'AmEx Platinum', balance: 14774, apr: 18, promoEndDate: '', minPayment: null, notes: '' },
-      { id: 'debt-usaa', category: 'Credit', name: 'USAA Visa', balance: 7117, apr: 0, promoEndDate: '2025-12-18', minPayment: null, notes: '0% promo until Dec 18' },
+      { id: 'debt-usaa', category: 'Credit', name: 'USAA Visa', balance: 6917, apr: 0, promoEndDate: '2025-12-18', minPayment: null, notes: '0% promo until Dec 18' },
       { id: 'debt-medical', category: 'Health', name: 'Medical — Urgent Care', balance: 3000, apr: 0, promoEndDate: '', minPayment: 50, notes: '' },
     ];
 
@@ -820,7 +840,26 @@
       s.paycheckIntervalDays = Math.max(1, Number(s.paycheckIntervalDays) || 14);
       if (!s.depositsStartedDate) s.depositsStartedDate = defaultDepositsStartedDate();
       s.monthlyDeposit = s.paycheckAmount * s.paychecksPerMonth;
+      s.referralBonuses = normalizeReferralBonuses(s.referralBonuses);
       return s;
+    }
+
+    /** Coerce each referral bonus row to { id, amount, scheduledDate, received, note }. */
+    function normalizeReferralBonuses(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map((b, i) => ({
+        id: b && b.id ? String(b.id) : `chime-ref-${Date.now()}-${i}`,
+        amount: Math.max(0, Number(b && b.amount) || 0),
+        scheduledDate: b && b.scheduledDate ? String(b.scheduledDate) : '',
+        received: !!(b && b.received),
+        note: b && b.note ? String(b.note) : '',
+      }));
+    }
+
+    /** Total of unreceived referral bonus dollars still pending (informational). */
+    function pendingReferralBonusTotal(settings) {
+      const s = normalizeChimeSettings(settings);
+      return s.referralBonuses.reduce((sum, b) => sum + (b.received ? 0 : b.amount), 0);
     }
 
     function startOfToday() {
@@ -1132,6 +1171,39 @@
         if (incomeSettings.monthlyLivingExpenses == null) {
           incomeSettings.monthlyLivingExpenses = DEFAULT_INCOME.monthlyLivingExpenses;
           saveIncome();
+        }
+      }
+      if (fromVersion < 15) {
+        // $200 paid to USAA on 2026-05-26. Only adjust if user is still on the
+        // pre-payment default ($7,117); otherwise leave their custom balance alone.
+        const usaa = debts.find((d) => d.id === 'debt-usaa');
+        if (usaa && Number(usaa.balance) === 7117) {
+          usaa.balance = 6917;
+          if (!usaa.notes || !usaa.notes.includes('$200 paid')) {
+            usaa.notes = (usaa.notes ? usaa.notes + ' · ' : '') + '$200 paid 2026-05-26 ($100 from Chime referral, $100 from checking)';
+          }
+          saveDebts();
+        }
+        // Inject the 3-payment Chime referral promo onto the SAVED chime settings,
+        // unless the user already has any referral bonuses configured. chimeSettings
+        // hasn't been loaded into memory yet at this point (it loads after migrate),
+        // so go straight to localStorage like the v7/v8 migrations do.
+        const chimeRawV15 = localStorage.getItem(STORAGE_CHIME);
+        if (chimeRawV15) {
+          try {
+            const parsed = JSON.parse(chimeRawV15);
+            if (!Array.isArray(parsed.referralBonuses) || parsed.referralBonuses.length === 0) {
+              parsed.referralBonuses = JSON.parse(JSON.stringify(DEFAULT_CHIME_REFERRAL_BONUSES));
+              localStorage.setItem(STORAGE_CHIME, JSON.stringify(normalizeChimeSettings(parsed)));
+            }
+          } catch { /* keep existing */ }
+        } else {
+          // No saved chime yet — seed defaults with the bonuses included.
+          const seeded = normalizeChimeSettings({
+            ...DEFAULT_CHIME,
+            referralBonuses: JSON.parse(JSON.stringify(DEFAULT_CHIME_REFERRAL_BONUSES)),
+          });
+          localStorage.setItem(STORAGE_CHIME, JSON.stringify(seeded));
         }
       }
     }
@@ -1615,6 +1687,13 @@
       let hsaBalance = Number(hsa.balance) || 0;
       let hsaDateIdx = 0;
 
+      // Each unreceived referral bonus lands once on the first projected month
+      // whose monthEnd >= its scheduledDate. Received bonuses are already in `balance`.
+      const pendingBonuses = s.referralBonuses
+        .filter((b) => !b.received && b.amount > 0 && b.scheduledDate)
+        .map((b) => ({ ...b, due: parseDate(b.scheduledDate), credited: false }))
+        .sort((a, b) => a.due - b.due);
+
       monthStarts.forEach((monthStart, monthIndex) => {
         const monthEnd = endOfMonth(monthStart);
         const totalDebt = totalDebtAtMonth(monthEnd);
@@ -1627,6 +1706,15 @@
           }
           dateIdx += 1;
         }
+        let referralBonus = 0;
+        pendingBonuses.forEach((b) => {
+          if (b.credited) return;
+          if (b.due <= monthEnd) {
+            balance += b.amount;
+            referralBonus += b.amount;
+            b.credited = true;
+          }
+        });
         const interest = balance * monthlyRate;
         balance += interest;
 
@@ -1660,6 +1748,7 @@
           deposit: dep,
           hsaDeposit: hsaDep,
           quarterlyBonus,
+          referralBonus,
           interest,
         });
 
@@ -2582,6 +2671,7 @@
       document.getElementById('chime-stop-date').value = chimeSettings.stopDepositsDate || '';
       document.getElementById('stop-date-wrap').classList.toggle('opacity-50', !chimeSettings.stopDepositsEnabled);
       updateChimeMonthlyLabels();
+      renderReferralBonusList();
 
       const override = document.getElementById('calendar-deposit-override');
       if (override && !override.dataset.touched) override.value = chimeSettings.monthlyDeposit;
@@ -2598,6 +2688,76 @@
       chimeSettings = normalizeChimeSettings(chimeSettings);
       saveChime();
       updateChimeMonthlyLabels();
+    }
+
+    function renderReferralBonusList() {
+      const container = document.getElementById('chime-referral-list');
+      const summary = document.getElementById('chime-referral-summary');
+      if (!container) return;
+      const bonuses = chimeSettings.referralBonuses || [];
+      if (!bonuses.length) {
+        container.innerHTML = '<p class="text-xs italic text-slate-500">No referral bonuses tracked. Click + Add to create one.</p>';
+      } else {
+        container.innerHTML = bonuses.map((b) => `
+          <div class="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900" data-bonus-id="${b.id}">
+            <input type="text" data-field="note" value="${escapeAttr(b.note || '')}" placeholder="Note" class="rounded-md border border-slate-200 px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-900" />
+            <input type="date" data-field="scheduledDate" value="${b.scheduledDate || ''}" class="rounded-md border border-slate-200 px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-900" />
+            <input type="number" min="0" step="0.01" data-field="amount" value="${b.amount}" class="w-24 rounded-md border border-slate-200 px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-900" />
+            <label class="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+              <input type="checkbox" data-field="received" ${b.received ? 'checked' : ''} class="rounded border-slate-300" />
+              <span>Received</span>
+            </label>
+            <button type="button" data-action="remove" class="col-span-4 justify-self-end text-[11px] text-red-600 hover:underline dark:text-red-400">Remove</button>
+          </div>
+        `).join('');
+      }
+      const pending = pendingReferralBonusTotal(chimeSettings);
+      const total = bonuses.reduce((sum, b) => sum + b.amount, 0);
+      if (summary) {
+        summary.textContent = bonuses.length
+          ? `Total promo value: ${formatMoney(total)} — ${formatMoney(pending)} still pending across ${bonuses.filter((b) => !b.received).length} payout${bonuses.filter((b) => !b.received).length === 1 ? '' : 's'}.`
+          : '—';
+      }
+    }
+
+    function escapeAttr(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function addReferralBonus() {
+      const today = formatDate(startOfToday());
+      chimeSettings.referralBonuses = [
+        ...(chimeSettings.referralBonuses || []),
+        { id: `chime-ref-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, amount: 0, scheduledDate: today, received: false, note: '' },
+      ];
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      saveChime();
+      renderReferralBonusList();
+      refreshAll();
+    }
+
+    function updateReferralBonusFromRow(row) {
+      const id = row.dataset.bonusId;
+      const bonus = (chimeSettings.referralBonuses || []).find((b) => b.id === id);
+      if (!bonus) return;
+      const noteEl = row.querySelector('[data-field="note"]');
+      const dateEl = row.querySelector('[data-field="scheduledDate"]');
+      const amtEl = row.querySelector('[data-field="amount"]');
+      const rxEl = row.querySelector('[data-field="received"]');
+      bonus.note = noteEl ? noteEl.value : '';
+      bonus.scheduledDate = dateEl ? dateEl.value : '';
+      bonus.amount = amtEl ? Math.max(0, parseFloat(amtEl.value) || 0) : 0;
+      bonus.received = !!(rxEl && rxEl.checked);
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      saveChime();
+    }
+
+    function removeReferralBonus(id) {
+      chimeSettings.referralBonuses = (chimeSettings.referralBonuses || []).filter((b) => b.id !== id);
+      chimeSettings = normalizeChimeSettings(chimeSettings);
+      saveChime();
+      renderReferralBonusList();
+      refreshAll();
     }
 
     /* ============================================================
@@ -2795,6 +2955,7 @@
               <div>
                 <span class="text-slate-500">Chime</span>
                 <p class="font-semibold text-chime">${formatMoney(r.chimeBalance)}</p>
+                ${r.referralBonus ? `<p class="text-[10px] text-sky-600 dark:text-sky-400">+${formatMoney(r.referralBonus)} referral bonus</p>` : ''}
               </div>
               <div>
                 <span class="text-slate-500">HSA</span>
@@ -3114,6 +3275,27 @@
           refreshAll();
         });
       });
+
+      document.getElementById('chime-add-referral')?.addEventListener('click', addReferralBonus);
+      const referralList = document.getElementById('chime-referral-list');
+      if (referralList) {
+        const onRowChange = (e) => {
+          const row = e.target.closest('[data-bonus-id]');
+          if (!row) return;
+          if (e.target.dataset.field) {
+            updateReferralBonusFromRow(row);
+            refreshAll();
+          }
+        };
+        referralList.addEventListener('input', onRowChange);
+        referralList.addEventListener('change', onRowChange);
+        referralList.addEventListener('click', (e) => {
+          if (e.target.dataset.action === 'remove') {
+            const row = e.target.closest('[data-bonus-id]');
+            if (row && confirm('Remove this referral bonus?')) removeReferralBonus(row.dataset.bonusId);
+          }
+        });
+      }
 
       document.getElementById('calendar-deposit-override').addEventListener('input', (e) => {
         e.target.dataset.touched = '1';

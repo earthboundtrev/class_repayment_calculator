@@ -98,6 +98,7 @@ Months counted from each expense **incurred date**:
 ### Chime (education fund)
 - Default: **$200** per paycheck, **2** paychecks/month → **$400/mo**, **3.5%** APY
 - Bi-weekly deposit schedule from a configurable start date
+- **Referral bonuses**: one-time promo payouts (e.g. Chime $100 + $100 + $150 over 3 months while a $200+ direct deposit lands each month). Each row has `amount`, `scheduledDate`, `received`, and `note`. Unreceived bonuses are credited to the projected Chime balance on/after their scheduled date.
 - Surplus on dashboard = projected Chime balance − required education reserve
 
 ### HSA
@@ -119,7 +120,7 @@ On first visit (empty `localStorage`), the app seeds example data:
 | Debts | Balance | Notes |
 |-------|---------|--------|
 | AmEx Platinum | $14,774 | 18% APR |
-| USAA Visa | $7,117 | 0% until 2025-12-18 |
+| USAA Visa | $6,917 | 0% until 2025-12-18 (reflects $200 payment on 2026-05-26) |
 | Medical — Urgent Care | $3,000 | $50/mo min |
 
 Plus certifications (CISSP, AWS, Azure, GCP, Terraform, planned Cloud Cram tracks), historical exam expenses/attempts, and staggered **upcoming** exam dates.
@@ -142,7 +143,7 @@ All data is stored in the browser **`localStorage`** per device and origin.
 | `eduRepayment_chime` | Chime account settings |
 | `eduRepayment_hsa` | HSA settings |
 | `eduRepayment_theme` | `light` / `dark` |
-| `eduRepayment_dataVersion` | Schema version (currently **14**); migrations run on load |
+| `eduRepayment_dataVersion` | Schema version (currently **15**); migrations run on load |
 
 ### Export / import
 
